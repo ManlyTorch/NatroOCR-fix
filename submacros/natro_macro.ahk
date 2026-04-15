@@ -2192,7 +2192,6 @@ hBitmapsSBT := Map(), hBitmapsSBT.CaseSense := 0
 #Include "gui\bitmaps.ahk"
 #Include "beemenu\bitmaps.ahk"
 #Include "buffs\bitmaps.ahk"
-#Include "convert\bitmaps.ahk"
 #Include "collect\bitmaps.ahk"
 #Include "kill\bitmaps.ahk"
 #Include "boost\bitmaps.ahk"
@@ -11550,23 +11549,19 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		Sleep 2000 + 1000 * A_Index
 
 		; hive check
-		if !atHive() {
-			if nm_DetectSpawn() {
-				Sleep 500
-				GetRobloxClientPos(hwnd)
-				MouseMove windowX+350, windowY+offsetY+100
-				send "{" ZoomOut " 8}"
-				movement := nm_spawnMoveTo(slotMove[HiveSlot])
-				nm_createWalk(movement)
-				KeyWait "F14", "D T5 L"
-				KeyWait "F14", "T20 L"
-				nm_endWalk()
-				sleep 500
-				if atHive()
-					HiveConfirmed := 1
-			} else {
-				nm_SetHiveCameraDirection(4, 1)
-			}
+		if !nm_ConfirmAtHive() && nm_DetectSpawn() {
+			Sleep 500
+			GetRobloxClientPos(hwnd)
+			MouseMove windowX+350, windowY+offsetY+100
+			send "{" ZoomOut " 8}"
+			movement := nm_spawnMoveTo(slotMove[HiveSlot])
+			nm_createWalk(movement)
+			KeyWait "F14", "D T5 L"
+			KeyWait "F14", "T20 L"
+			nm_endWalk()
+			sleep 500
+			if nm_ConfirmAtHive()
+				HiveConfirmed := 1
 		} else {
 			nm_SetHiveCameraDirection(4, 0)
 		}
@@ -11588,31 +11583,6 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 			Sleep (remaining*1000) ;miliseconds
 		}
 	}
-
-	atHive() {
-		ActivateRoblox()
-		hwnd := GetRobloxHWND()
-		offsetY := GetYOffset(hwnd)
-		GetRobloxClientPos(hwnd)
-
-		; --- 1. Check for colhey (Collect Honey text) ---
-		pBMScreen := Gdip_BitmapFromScreen(windowX + windowWidth // 2 - 150 "|" windowY + offsetY + 38 "|350|60")
-		colheyFound := (Gdip_ImageSearch(pBMScreen, bitmaps["colhey"],,,,,,7) = 1)
-		Gdip_DisposeImage(pBMScreen)
-
-		if colheyFound
-			return true
-
-		; --- 2. Check for e_button in the same way nm_convert() checks it ---
-		pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY+36 "|400|120")
-		eFound := (Gdip_ImageSearch(pBMScreen, bitmaps["e_button"], , , , , , 2, , 6) = 1)
-		Gdip_DisposeImage(pBMScreen)
-
-		if eFound
-			return true
-
-		return false
-	}
 }
 nm_HealthBar() { 
 	local detection := 0
@@ -11627,13 +11597,13 @@ nm_HealthBar() {
 	return detection
 }
 nm_ConfirmAtHive(){
-	pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-	if ((Gdip_ImageSearch(pBMScreen, bitmaps["makehoney"], , , , , , 2, , 2) = 1) || (Gdip_ImageSearch(pBMScreen, bitmaps["collectpollen"], , , , , , 2, , 2) = 1)){
-		Gdip_DisposeImage(pBMScreen)
-		return 1
+	ActivateRoblox()
+	GetRobloxClientPos()
+	Loop 4 {
+		if findTextInRect("make", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 2).Has("Word") {
+			return 1
+		}
 	}
-	Gdip_DisposeImage(pBMScreen)
-	return 0
 }
 nm_DetectSpawn() { ; some of the code was from hive check, repurposing it here since it seems to reliably detect hive slots even when the stuff is really bad
     ActivateRoblox()
@@ -18031,12 +18001,12 @@ nm_convert(ignoreActiveConvertState := 0, forceBalloonConvert := 0){
 		Gdip_DisposeImage(pBMScreen)
 		return
 	}
-	if (Gdip_ImageSearch(pBMScreen, bitmaps["makehoney"], , , , , , 2, , 2) = 1) {
+	Gdip_DisposeImage(pBMScreen)
+	if nm_ConfirmAtHive() {
 		SendInput "{" SC_E " down}"
 		Sleep 100
 		SendInput "{" SC_E " up}"
 	}
-	Gdip_DisposeImage(pBMScreen)
 	ConvertStartTime:=nowUnix()
 	ConvertTraceStart:=A_TickCount
 	nm_ConvertTrace("Convert: start")
@@ -18080,12 +18050,12 @@ nm_convert(ignoreActiveConvertState := 0, forceBalloonConvert := 0){
 				return
 			}
 			GetRobloxClientPos(hwnd)
-			pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY+36 "|" windowWidth//2+200 "|" windowHeight-offsetY-36)
-			if (Gdip_ImageSearch(pBMScreen, bitmaps["makehoney"], , , , 400, 120, 2, , 2) = 1) {
+			if nm_ConfirmAtHive() {
 				SendInput "{" SC_E " down}"
 				Sleep 100
 				SendInput "{" SC_E " up}"
 			}
+			pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY+36 "|" windowWidth//2+200 "|" windowHeight-offsetY-36)
 			if ((Gdip_ImageSearch(pBMScreen, bitmaps["e_button"], , , , 400, 120, 2, , 6) = 0)
 				|| ((Gdip_ImageSearch(pBMScreen, bitmaps["hiveballoon"], , windowWidth//2, windowHeight-offsetY-36-400, , , 40, , 3) = 1) && (ballooncomplete:=1))) {
 				Gdip_DisposeImage(pBMScreen)
@@ -18188,14 +18158,14 @@ nm_convert(ignoreActiveConvertState := 0, forceBalloonConvert := 0){
 					MouseMove windowX+windowWidth-30, windowY+offsetY+16
 					click
 				}
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY+36 "|" windowWidth//2+200 "|" windowHeight-offsetY-36)
 				nm_ConvertTrace("Balloon: screenshot", loopTick)
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["makehoney"], , , , 400, 120, 2, , 2) = 1) {
+				if nm_ConfirmAtHive() {
 					SendInput "{" SC_E " down}"
 					Sleep 100
 					SendInput "{" SC_E " up}"
 				}
 				nm_ConvertTrace("Balloon: makehoney check", loopTick)
+				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY+36 "|" windowWidth//2+200 "|" windowHeight-offsetY-36)
 				if ((Gdip_ImageSearch(pBMScreen, bitmaps["e_button"], , , , 400, 120, 2, , 6) = 0)
 					|| (Gdip_ImageSearch(pBMScreen, bitmaps["hiveballoon"], , windowWidth//2, windowHeight-offsetY-36-400, , , 40, , 3) = 1)) {
 					Gdip_DisposeImage(pBMScreen)

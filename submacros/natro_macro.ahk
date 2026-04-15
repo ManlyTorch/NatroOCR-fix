@@ -18896,7 +18896,7 @@ ShellRun(prms*)
 }
 nm_claimHiveSlot(){
 	global KeyDelay, FwdKey, RightKey, LeftKey, BackKey, ZoomOut, HiveSlot, HiveConfirmed, SC_E, SC_Esc, SC_R, SC_Enter, bitmaps
-	GetBitmap() {
+	RemoveFriendJoin() {
 		pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
 		loop 20 {
 			for , bitmap in bitmaps["FriendJoin"] {
@@ -18910,7 +18910,8 @@ nm_claimHiveSlot(){
 				}
 			}
 		}
-		return pBMScreen
+		Gdip_DisposeImage(pBMScreen)
+		return
 	}
 
 	DetectHiveslots := 1
@@ -18923,8 +18924,7 @@ nm_claimHiveSlot(){
 		MouseMove windowX+350, windowY+offsetY+100
 
 		;reset
-		if (A_Index > 1)
-		{
+		if (A_Index > 1) {
 			resetTime:=nowUnix()
 			PostSubmacroMessage("background", 0x5554, 1, resetTime)
 			ActivateRoblox()
@@ -18933,8 +18933,7 @@ nm_claimHiveSlot(){
 			send "{" SC_Esc "}{" SC_R "}{" SC_Enter "}{" SC_Enter "}"
 			SetKeyDelay PrevKeyDelay
 			n := 0
-			while ((n < 2) && (A_Index <= 80))
-			{
+			while ((n < 2) && (A_Index <= 80)) {
 				Sleep 100
 				GetRobloxClientPos(hwnd)
 				pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY "|" windowWidth "|50")
@@ -18972,21 +18971,21 @@ nm_claimHiveSlot(){
 				KeyWait "F14", "T20 L"
 				nm_endWalk()
 				sleep 500
-				pBMScreen := GetBitmap()
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["claimhive"], , , , , , 2, , 6) = 1) {
-					Gdip_DisposeImage(pBMScreen)
-					Send "{" SC_E " down}"
-					sleep 100
-					Send "{" SC_E " up}"
-					HiveConfirmed := 1
-					HiveSlot := preferred
-					MainGui["HiveSlot"].Text := HiveSlot
-					IniWrite HiveSlot, "settings\nm_config.ini", "Settings", "HiveSlot"
-					nm_setStatus("Claimed", "Hive Slot " HiveSlot)
-					MouseMove windowX+350, windowY+offsetY+100
-					return 1
+				RemoveFriendJoin()
+				Loop 3 {
+					if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 2).Has("Word") {
+						Send "{" SC_E " down}"
+						sleep 100
+						Send "{" SC_E " up}"
+						HiveConfirmed := 1
+						HiveSlot := preferred
+						MainGui["HiveSlot"].Text := HiveSlot
+						IniWrite HiveSlot, "settings\nm_config.ini", "Settings", "HiveSlot"
+						nm_setStatus("Claimed", "Hive Slot " HiveSlot)
+						MouseMove windowX+350, windowY+offsetY+100
+						return 1
+					}
 				}
-				Gdip_DisposeImage(pBMScreen)
 			}
 			DetectHiveslots := 0
 			continue
@@ -19016,10 +19015,8 @@ nm_claimHiveSlot(){
 		;check slots 1 to old HiveSlot
 		slots := Map()
 		movement := nm_Walk(9.2, LeftKey)
-		Loop HiveSlot
-		{
-			if (A_Index > 1)
-			{
+		Loop HiveSlot {
+			if (A_Index > 1) {
 				nm_createWalk(movement)
 				KeyWait "F14", "D T5 L"
 				KeyWait "F14", "T20 L"
@@ -19027,18 +19024,19 @@ nm_claimHiveSlot(){
 			}
 
 			Sleep 500
-			pBMScreen := GetBitmap()
-			if (Gdip_ImageSearch(pBMScreen, bitmaps["claimhive"], , , , , , 2, , 6) = 1)
-				slots[A_Index] := 1
-			Gdip_DisposeImage(pBMScreen)
+			RemoveFriendJoin()
+			Loop 3 {
+				if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 2).Has("Word") {
+					slots[A_Index] := 1
+					break
+				}
+			}
 		}
 
-		if (slots.Has(HiveSlot) && (slots[HiveSlot] = 1))
+		if (slots.Has(HiveSlot) && (slots[HiveSlot] = 1)) {
 			break
-		else
-		{
-			if ((slot := ObjMinIndex(slots)) > 0)
-			{
+		} else {
+			if ((slot := ObjMinIndex(slots)) > 0) {
 				movement := nm_Walk((HiveSlot - slot) * 9.2, RightKey)
 				nm_createWalk(movement)
 				KeyWait "F14", "D T5 L"
@@ -19046,37 +19044,36 @@ nm_claimHiveSlot(){
 				nm_endWalk()
 
 				Sleep 500
-				pBMScreen := GetBitmap()
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["claimhive"], , , , , , 2, , 6) = 1) {
-					Gdip_DisposeImage(pBMScreen)
-					HiveSlot := slot
-					break
+				RemoveFriendJoin()
+				Loop 3 {
+					if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 2).Has("Word") {
+						HiveSlot := slot
+						break 2
+					}
 				}
-				Gdip_DisposeImage(pBMScreen)
-			}
-			else {
-				Loop (6 - HiveSlot)
-				{
+			} else {
+				Loop (6 - HiveSlot) {
 					nm_createWalk(movement)
 					KeyWait "F14", "D T5 L"
 					KeyWait "F14", "T20 L"
 					nm_endWalk()
 
 					Sleep 500
-					pBMScreen := GetBitmap()
-					if (Gdip_ImageSearch(pBMScreen, bitmaps["claimhive"], , , , , , 2, , 6) = 1) {
-						Gdip_DisposeImage(pBMScreen)
-						HiveSlot += A_Index
-						break 2
+					RemoveFriendJoin()
+					Loop 3 {
+						if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 2).Has("Word") {
+							HiveSlot += A_Index
+							break 3
+						}
 					}
-					Gdip_DisposeImage(pBMScreen)
 				}
 			}
 		}
 
 		nm_setStatus("Failed", "Claim Hive Slot" ((A_Index > 1) ? (" (Attempt " A_Index ")") : ""))
-		if (A_Index = 5)
+		if (A_Index = 5) {
 			return 0
+		}
 	}
 
 	SendInput "{" SC_E " down}"

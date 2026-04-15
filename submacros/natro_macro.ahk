@@ -11469,13 +11469,13 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		MouseMove windowX+350, windowY+offsetY+100
 		;check to make sure you are not in a yes/no prompt
 		GetRobloxClientPos(hwnd)
-		pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-		if (Gdip_ImageSearch(pBMScreen, bitmaps["no"], &pos, , , , , 2, , 3) = 1) {
-			MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
+		searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150, 2)
+		if searchResult.Has("Word") {
+			rect := searchResult["Word"].BoundingRect
+			MouseMove rect.x, rect.y
 			Click
 			MouseMove windowX+350, windowY+offsetY+100
 		}
-		Gdip_DisposeImage(pBMScreen)
 		;check to make sure you are not in feed window on accident
 		imgPos := nm_imgSearch("cancel.png",30)
 		If (imgPos[1] = 0){
@@ -11812,15 +11812,13 @@ nm_AmuletPrompt(decision:=0, type:=0, *){
 			Gdip_DisposeImage(pBMScreen)
 			Loop 25
 			{
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY "|500|" windowHeight)
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], &pos, , , , , 2, , 2) = 1)
-				{
-					MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+SubStr(pos, InStr(pos, ",")+1), 5
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				if searchResult.Has("Word") {
+					rect := searchResult["Word"].BoundingRect
+					MouseMove rect.x, rect.y
 					Click
-					Gdip_DisposeImage(pBMScreen)
 					break
 				}
-				Gdip_DisposeImage(pBMScreen)
 				Sleep 100
 			}
 			nm_setShiftLock(Prev_ShiftLock)
@@ -13575,19 +13573,18 @@ nm_StickerPrinter(){
 				Click
 				i := 0
 				loop 16 {
-					sleep 250
-					pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-					if (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], &pos, , , , , 2, , 2) = 1) {
-						MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1)-50, windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
-						sleep 150
+					Sleep 250
+					searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+					if searchResult.Has("Word") {
+						rect := searchResult["Word"].BoundingRect
+						MouseMove rect.x, rect.y
+						Sleep 150
 						Click
-						sleep 100
+						Sleep 100
 						i++
 					} else if (i > 0) {
-						Gdip_DisposeImage(pBMScreen)
 						break
 					}
-					Gdip_DisposeImage(pBMScreen)
 					if (A_Index = 16)
 						break
 				}
@@ -13703,16 +13700,16 @@ nm_StickerStack(resetBeforeTravel := 1){
 
 			i := 0
 			loop 16 {
-				sleep 250
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], &pos, , , , , 2, , 2) = 1) {
-					MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1)-50, windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
-					sleep 150
+				Sleep 250
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				if searchResult.Has("Word") {
+					rect := searchResult["Word"].BoundingRect
+					MouseMove rect.x, rect.y
+					Sleep 150
 					Click
-					sleep 100
+					Sleep 100
 					; voucher separate for aesthetic
 					if ((++i >= 4) && !InStr(stack, "Skin") && !(stack="Voucher")) { ; Yes/No prompt appeared too many times, assume this is not a regular sticker
-						Gdip_DisposeImage(pBMScreen)
 						nm_setStatus("Error", "Yes/No appeared too many times!")
 						Sleep 500
 						sendinput "{" SC_E " down}"
@@ -13721,10 +13718,8 @@ nm_StickerStack(resetBeforeTravel := 1){
 						break 2
 					}
 				} else if (i > 0) {
-					Gdip_DisposeImage(pBMScreen)
 					break
 				} else if (A_Index = 16) {
-					Gdip_DisposeImage(pBMScreen)
 					nm_setStatus("Error", "No Tickets left to use!`nSticker Stack has been disabled.")
 					StickerStackCheck := 0
 					Sleep 500
@@ -13733,7 +13728,6 @@ nm_StickerStack(resetBeforeTravel := 1){
 					sendinput "{" SC_E " up}"
 					break 2
 				}
-				Gdip_DisposeImage(pBMScreen)
 			}
 			Sleep 2000
 			nm_SetStatus("Collected", "Sticker Stack")
@@ -22573,35 +22567,32 @@ ba_harvestPlanter(planterNum){
 		GetRobloxClientPos(hwnd)
 		if ((HarvestFullGrown = 1) && !PlanterHarvestNow%planterNum%) {
 			loop 3 {
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["no"], &pos, , , , , 2, , 3) = 1) {
-					MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
+				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150, 2)
+				if searchResult.Has("Word") {
+					rect := searchResult["Word"].BoundingRect
+					MouseMove rect.x, rect.y
 					Sleep 150
 					Click
 					sleep 100
 					MouseMove windowX+350, windowY+offsetY+100
-					Gdip_DisposeImage(pBMScreen)
 					nm_PlanterTimeUpdate(FieldName)
 					return 1
 				}
-				Gdip_DisposeImage(pBMScreen)
 			}
-		}
-		else {
+		} else {
 			loop 3 {
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], &pos, , , , , 2, , 2) = 1) {
-					MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				if searchResult.Has("Word") {
+					rect := searchResult["Word"].BoundingRect
+					MouseMove rect.x, rect.y
 					Sleep 150
 					Click
-					sleep 100
+					Sleep 100
 					MouseMove windowX+350, windowY+offsetY+100
-					Gdip_DisposeImage(pBMScreen)
 					If PlanterHarvestNow%planterNum%
 						IniWrite 0, "settings\nm_config.ini", "Planters", "PlanterHarvestNow" planterNum
 					break
 				}
-				Gdip_DisposeImage(pBMScreen)
 				Sleep 50 ; delay in case of lag
 			}
 		}
@@ -23079,36 +23070,33 @@ mp_HarvestPlanter(PlanterIndex) {
 		GetRobloxClientPos(hwnd)
 		if ((PlanterHarvestFull%PlanterIndex% == "Full") && !PlanterHarvestNow%PlanterIndex%) {
 			loop 3 {
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["no"], &pos, , , , , 2, , 3) = 1) {
-					MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
+				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150, 2)
+				if searchResult.Has("Word") {
+					rect := searchResult["Word"].BoundingRect
+					MouseMove rect.x, rect.y
 					Sleep 150
 					Click
 					sleep 100
 					MouseMove windowX+350, windowY+offsetY+100
 					If PlanterHarvestNow%PlanterIndex%
 						IniWrite 0, "settings\nm_config.ini", "Planters", "PlanterHarvestNow" PlanterIndex
-					Gdip_DisposeImage(pBMScreen)
 					nm_PlanterTimeUpdate(MFieldName)
 					return 2
 				}
-				Gdip_DisposeImage(pBMScreen)
 				Sleep 50 ; delay in case of lag
 			}
-		}
-		else {
+		} else {
 			loop 3 {
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], &pos, , , , , 2, , 2) = 1) {
-					MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				if searchResult.Has("Word") {
+					rect := searchResult["Word"].BoundingRect
+					MouseMove rect.x, rect.y
 					Sleep 150
 					Click
-					sleep 100
-					Gdip_DisposeImage(pBMScreen)
+					Sleep 100
 					MouseMove windowX+350, windowY+offsetY+100
 					break
 				}
-				Gdip_DisposeImage(pBMScreen)
 				Sleep 50 ; delay in case of lag
 			}
 		}

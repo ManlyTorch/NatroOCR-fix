@@ -11877,7 +11877,7 @@ nm_gotoRamp(){
 	KeyWait "F14", "T60 L"
 	nm_endWalk()
 }
-nm_gotoCannon(){
+nm_gotoCannon() {
 	global LeftKey, RightKey, FwdKey, BackKey, currentWalk, objective, SC_Space, bitmaps
 
 	nm_setShiftLock(0)
@@ -11888,8 +11888,7 @@ nm_gotoCannon(){
 	MouseMove windowX+350, windowY+offsetY+100
 
 	success := 0
-	Loop 10
-	{
+	Loop 10 {
 		movement :=
 		(
 		'Send "{' SC_Space ' down}{' RightKey ' down}"
@@ -11904,49 +11903,35 @@ nm_gotoCannon(){
 		KeyWait "F14", "D T5 L"
 		DllCall("GetSystemTimeAsFileTime","int64p",&s:=0)
 		n := s, f := s+200000000
-		while (n < f)
-		{
-			pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-			if (Gdip_ImageSearch(pBMScreen, bitmaps["redcannon"], , , , , , 2, , 2) = 1)
-			{
-				success := 1, Gdip_DisposeImage(pBMScreen)
+		while (n < f) {
+			if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
+				success := 1
 				break
 			}
-			Gdip_DisposeImage(pBMScreen)
 			DllCall("GetSystemTimeAsFileTime","int64p",&n)
 		}
 		nm_endWalk()
 
-		if (success = 1) ; check that cannon was not overrun, at the expense of a small delay
-		{
-			Loop 10
-			{
-				if (A_Index = 10)
-				{
+		if (success = 1) { ; check that cannon was not overrun, at the expense of a small delay 
+			Loop 10 {
+				if (A_Index = 10) {
 					success := 0
 					break
 				}
 				Sleep 500
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["redcannon"], , , , , , 2, , 2) = 1)
-				{
-					Gdip_DisposeImage(pBMScreen)
+				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
 					break 2
-				}
-				else
-				{
+				} else {
 					movement := nm_Walk(1.5, LeftKey)
 					nm_createWalk(movement)
 					KeyWait "F14", "D T5 L"
 					KeyWait "F14", "T5 L"
 					nm_endWalk()
 				}
-				Gdip_DisposeImage(pBMScreen)
 			}
 		}
 
-		if (success = 0)
-		{
+		if (success = 0) {
 			obj := objective
 			nm_Reset()
 			nm_setStatus("Traveling", obj)
@@ -21360,6 +21345,7 @@ nm_PathVars(){
 	return
 	(
 	'
+	#Include "OCR.ahk"
 	HiveSlot:=' HiveSlot '
 	MoveMethod:="' MoveMethod '"
 	HiveBees:=' HiveBees '
@@ -21374,15 +21360,12 @@ nm_PathVars(){
 	}
 
 	nm_gotoCannon() {
-		static pBMCannon := Gdip_BitmapFromBase64("iVBORw0KGgoAAAANSUhEUgAAABsAAAAMAQMAAACpyVQ1AAAABlBMVEUAAAD3//lCqWtQAAAAAXRSTlMAQObYZgAAAEdJREFUeAEBPADD/wDAAGBgAMAAYGAA/gBgYAD+AGBgAMAAYGAAwABgYADAAGBgAMAAYGAAwABgYADAAGBgAMAAYGAAwABgYDdgEn1l8cC/AAAAAElFTkSuQmCC")
-
 		hwnd := GetRobloxHWND()
 		GetRobloxClientPos(hwnd)
 		SendEvent "{Click " windowX+350 " " windowY+offsetY+100 " 0}"
 
 		success := 0
-		Loop 10
-		{
+		Loop 10 {
 			Send "{" SC_Space " down}{" RightKey " down}"
 			Sleep 100
 			Send "{" SC_Space " up}"
@@ -21392,49 +21375,38 @@ nm_PathVars(){
 
 			DllCall("GetSystemTimeAsFileTime","int64p",&s:=0)
 			n := s, f := s+100000000
-			while (n < f)
-			{
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-				if (Gdip_ImageSearch(pBMScreen, pBMCannon, , , , , , 2, , 2) = 1)
-				{
-					success := 1, Gdip_DisposeImage(pBMScreen)
+			while (n < f) {
+				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
+					success := 1
 					break
 				}
-				Gdip_DisposeImage(pBMScreen)
 				DllCall("GetSystemTimeAsFileTime","int64p",&n)
 			}
 			Send "{" RightKey " up}"
 
-			if (success = 1) ; check that cannon was not overrun, at the expense of a small delay
-			{
-				Loop 10
-				{
-					if (A_Index = 10)
-					{
+			if (success = 1) { ; check that cannon was not overrun, at the expense of a small delay
+				Loop 10 {
+					if (A_Index = 10) {
 						success := 0
 						break
 					}
 					Sleep 500
-					pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-					if (Gdip_ImageSearch(pBMScreen, pBMCannon, , , , , , 2, , 2) = 1)
-					{
-						Gdip_DisposeImage(pBMScreen)
+					if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
 						break 2
-					}
-					else
+					} else {
 						nm_Walk(1.5, LeftKey)
-					Gdip_DisposeImage(pBMScreen)
+					}
 				}
 			}
 
-			if (success = 0)
-			{
+			if (success = 0) {
 				nm_Reset()
 				nm_gotoRamp()
 			}
 		}
-		if (success = 0)
+		if (success = 0) {
 			ExitApp
+		}
 	}
 
 	nm_Reset()

@@ -10,6 +10,7 @@ filterItems(words) {
         if itemRect.H > 13 {
 			fakeWord := Map()
 			fakeWord.Text := StrReplace(word.Text, "-")
+			fakeWord.BoundingRect := itemRect
 			filteredWords.Push(fakeWord)
         }
     }
@@ -88,7 +89,7 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 		words := searchResult["Words"]
 		if searchResult.Has("Word") {
 			itemRect := searchResult["Word"].BoundingRect
-			if Abs(words[words.Length].Rect.Y - itemRect.Y) <= itemRect.H {
+			if Abs(words[words.Length].BoundingRect.Y - itemRect.Y) <= itemRect.H {
 				SendInput "{WheelDown 3}"
 				Sleep 550
 				remainingItems := []

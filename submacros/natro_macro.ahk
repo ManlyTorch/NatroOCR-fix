@@ -22380,14 +22380,14 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0, ba:=1) {
 		MouseClickDrag "Left", windowX+30, yPos, windowX+windowWidth//2, windowY+windowHeight//2, 5
 		Sleep 200
 		
-		if findTextInRect("yes", windowX + windowWidth // 4, windowY + windowHeight//2, windowWidth // 4, windowHeight//2).Has("Word") {
+		if findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150).Has("Word") {
 			break ; yes detected.
 		}
 	}
 	Loop 50 {
 		GetRobloxClientPos(hwnd)
 		loop 3 {
-			searchResult := findTextInRect("yes", windowX + windowWidth // 4, windowY + windowHeight//2, windowWidth // 4, windowHeight//2)
+			searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
 			if searchResult.Has("Word") {
 				rect := searchResult["Word"].BoundingRect
 				MouseMove rect.x, rect.y

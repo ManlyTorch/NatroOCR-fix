@@ -5,7 +5,6 @@
 #Include "Gdip_All.ahk"
 #Include "Gdip_ImageSearch.ahk"
 #Include "Roblox.ahk"
-#Include "OCR.ahk"
 #Include "nm_OpenMenu.ahk"
 #Include "nm_InventorySearch.ahk"
 
@@ -13,12 +12,7 @@ CoordMode "Mouse", "Screen"
 OnExit(ExitFunc)
 pToken := Gdip_Startup()
 
-bitmaps := Map()
-Shrine := Map()
-
-#Include ..\nm_image_assets\general\bitmaps.ahk
-
-bitmaps["giftedstar"] := Gdip_BitmapFromBase64("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAgMAAAC5YVYYAAAACVBMVEX9rDT+rDT/rDOj6H2ZAAAAFElEQVR42mNYtYoBgVYyrFoBYQMAf4AKnlh184sAAAAASUVORK5CYII=")
+giftedstar := Gdip_BitmapFromBase64("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAgMAAAC5YVYYAAAACVBMVEX9rDT+rDT/rDOj6H2ZAAAAFElEQVR42mNYtYoBgVYyrFoBYQMAf4AKnlh184sAAAAASUVORK5CYII=")
 
 if (MsgBox("WELCOME TO THE BASIC BEE REPLACEMENT PROGRAM!!!!!``nMade by anniespony#8135``n``nMake sure BEE SLOT TO CHANGE is always visible``nDO NOT MOVE THE SCREEN ORRESIZE WINDOW FROM NOW ON.``nMAKE SURE AUTO-JELLY IS DISABLED!!", "Basic Bee Replacement Program", 0x40001) = "Cancel")
 	ExitApp
@@ -52,13 +46,13 @@ Hotkey "RButton", ExitFunc, "On"
 Hotkey "F11", ExitFunc, "On"
 Sleep 250
 
-pBMC := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(pBMC), Gdip_GraphicsClear(G,0xffae792f), Gdip_DeleteGraphics(G) ; Common
-pBMM := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(pBMM), Gdip_GraphicsClear(G,0xffbda4ff), Gdip_DeleteGraphics(G) ; Mythic
+common := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(common), Gdip_GraphicsClear(G,0xffae792f), Gdip_DeleteGraphics(G) ; Common
+mythic := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(mythic), Gdip_GraphicsClear(G,0xffbda4ff), Gdip_DeleteGraphics(G) ; Mythic
 
-curItem := "basicegg"
+curItem := "BasicEgg"
 displayName := Map(
-	"basicegg", "Basic Eggs!",
-	"royaljelly", "Royal Jellies!"
+	"BasicEgg", "Basic Eggs!",
+	"RoyalJelly", "Royal Jellies!"
 )
 
 Loop {
@@ -88,7 +82,7 @@ Loop {
 		}
 
 		if (A_Index = 10) {
-			curItem := "royaljelly"
+			curItem := "RoyalJelly"
 			continue 2
 		}
 	}
@@ -96,20 +90,17 @@ Loop {
 
 	pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-155 "|" windowY+offsetY+((4*windowHeight)//10 - 135) "|310|205")
 	
-	if (Gdip_ImageSearch(pBMScreen, pBMM, , 50, 165, 260, 205, 2, , , 5) = 5) { ; Mythic Hatched
+	if (Gdip_ImageSearch(pBMScreen, mythic, , 50, 165, 260, 205, 2, , , 5) = 5) { ; Mythic Hatched
 		if (MsgBox("MYTHIC!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {
 			Gdip_DisposeImage(pBMScreen)
 			break
 		}
-	} else if (Gdip_ImageSearch(pBMScreen, pBMC, , 50, 165, 260, 205, 2, , , 5) = 5) {
-		curItem := "royaljelly"
-		if (Gdip_ImageSearch(pBMScreen, bitmaps["giftedstar"], , 0, 20, 130, 50, 5) = 1) { ; If gifted is hatched, stop
+	} else if (Gdip_ImageSearch(pBMScreen, giftedstar, , 0, 20, 130, 50, 5) = 1) {
+		if (Gdip_ImageSearch(pBMScreen, common, , 50, 165, 260, 205, 2, , , 5) = 5) { ; Gifted basic bee
 			MsgBox "SUCCESS!!!!", "Basic Bee Replacement Program", 0x40020
 			Gdip_DisposeImage(pBMScreen)
 			break
-		}
-	} else if (Gdip_ImageSearch(pBMScreen, bitmaps["giftedstar"], , 0, 20, 130, 50, 5) = 1) { ; Non-Basic Gifted Hatched
-		if (MsgBox("GIFTED!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {
+		} else if (MsgBox("GIFTED!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {  ; Non-Basic Gifted Hatched
 			Gdip_DisposeImage(pBMScreen)
 			break
 		}
@@ -119,7 +110,7 @@ Loop {
 ExitApp
 
 ExitFunc(*) {
-	try Gdip_DisposeImage(pBMC), Gdip_DisposeImage(pBMM)
+	try Gdip_DisposeImage(mythic), Gdip_DisposeImage(common)
 	try StatusBar.Destroy()
 	try Gdip_Shutdown(pToken)
 	ExitApp

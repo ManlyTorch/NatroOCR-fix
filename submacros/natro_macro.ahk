@@ -28,7 +28,6 @@ You should have received a copy of the license along with Natro Macro. If not, p
 #Include "JSON.ahk"
 #Include "Roblox.ahk"
 #Include "DurationFromSeconds.ahk"
-#Include "OCR.ahk"
 #Include "nowUnix.ahk"
 #Include "ErrorHandling.ahk"
 #Include "HashFile.ahk"
@@ -21318,7 +21317,6 @@ nm_PathVars(){
 	return
 	(
 	'
-	#Include "OCR.ahk"
 	HiveSlot:=' HiveSlot '
 	MoveMethod:="' MoveMethod '"
 	HiveBees:=' HiveBees '

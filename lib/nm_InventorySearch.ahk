@@ -7,7 +7,7 @@ filterItems(words) {
     filteredWords := Array()
     for idx, word in words {
         itemRect := word.BoundingRect
-        if itemRect.H > 13 {
+        if itemRect.H > 11 {
 			fakeWord := Map()
 			fakeWord.Text := StrReplace(word.Text, "-")
 			fakeWord.BoundingRect := itemRect

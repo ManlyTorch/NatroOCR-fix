@@ -32,8 +32,7 @@ for idx, item in itemArray {
  * @returns {Rect | Boolean} X,Y,W,H Map or false if it failed to find the item.
 */
 nm_InventorySearch(item, direction:="down", maxIter:=70) {
-	static lastItem := ""
-	global items, itemArray
+	static lastItemIdx := 0
 	nm_OpenMenu("itemmenu")
 	
 	itemIdx := 0
@@ -44,9 +43,9 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 	}
 	
 	; Activate roblox window and get it's current position and height
-	if !(hwnd := GetRobloxHWND()) {
+	if !(hwnd := GetRobloxHWND())
 		return false ; No roblox, return nothing.
-	}
+	
 	ActivateRoblox()
 	GetRobloxClientPos(hwnd)
 	offsetY := GetYOffset(hwnd)
@@ -54,7 +53,7 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 	; Scroll to the end of inventory IF item isn't known
 	if !itemIdx {
 		scrollDir := direction = "down" ? "Up" : "Down" 
-		lastItem := ""
+		lastItemIdx := 0
 		Loop 10 {
 			SendEvent "{Click " windowX+30 " " windowY+offsetY+200 " 0}"
 			SendInput "{Wheel" scrollDir " 100}"
@@ -64,8 +63,8 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 	
 	itemRect := false
 	firstItem := ""
-	doubleCheck := 0
-	clearViewCheck := 0
+	doubleCheck := false
+	clearViewCheck := false
 	remainingItems := []
 	scrollDir := direction = "down" ? "Down" : "Up"
 	Loop maxIter { ; Start searching
@@ -76,11 +75,11 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 			remainingItems := itemArray.Clone()
 			remainingItems.RemoveAt(itemIdx)
 			
-			if lastItem { ; Start from last searched item.
-				if lastItem > itemIdx {
+			if lastItemIdx { ; Start from last searched item.
+				if lastItemIdx > itemIdx {
 					remainingItems.Length := idx - 1
 				} else {
-					remainingItems.RemoveAt(1, lastItem-1)
+					remainingItems.RemoveAt(1, lastItemIdx-1)
 				}
 			}
 		}
@@ -94,35 +93,35 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 				Sleep 550
 				remainingItems := []
 				if !clearViewCheck { ; Check if at the end of the inventory, if so item is fully visible, ignore continue.
-					clearViewCheck := 1
+					clearViewCheck := true
 					continue
 				}
 			}
 			break ; Item found and is fully visible, break the loop
 		}
 		
-		if !itemIdx {
-			goto wordCheck
-		}
-		
-		(wrapped := Map("Words", words)).Words := words
-		for i, item in remainingItems {
-			if findTextInRect(item, wrapped).Has("Word") {
-				idx := items[item][1]
-				scrollDir := idx > itemIdx ? "Up" : "Down"
-				scrollIntensity := Max(Abs(itemIdx - idx) // 10, 3)
-				if idx > itemIdx {
-					remainingItems.Length := i - 1
-				} else {
-					remainingItems.RemoveAt(1, i)
+		if itemIdx {
+			(wrapped := Map("Words", words)).Words := words
+			found := false
+			for i, item in remainingItems {
+				if findTextInRect(item, wrapped).Has("Word") {
+					idx := items[item][1]
+					scrollDir := idx > itemIdx ? "Up" : "Down"
+					scrollIntensity := Max(Abs(itemIdx - idx) // 10, 3)
+					found := true
+					if idx > itemIdx {
+						remainingItems.Length := i - 1
+					} else {
+						remainingItems.RemoveAt(1, i)
+					}
+					break
 				}
-				goto wordCheck
+			}
+			if !found {
+				remainingItems := []
 			}
 		}
-
-		remainingItems := []
-
-		wordCheck:
+		
 		SendEvent "{Click " windowX+30 " " windowY+offsetY+200 " 0}"
 		SendInput "{Wheel" scrollDir " " scrollIntensity "}"
 		Sleep 550 ; wait for scroll to finish
@@ -141,12 +140,12 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 		}
 		
 		firstItem := firstWord.Text
-		doubleCheck := 0
+		doubleCheck := false
 	}
-
+	
 	if itemIdx {
-		lastItem := itemIdx
+		lastItemIdx := itemIdx
 	}
-
+	
 	return itemRect ; Return rect of item for dragging
 }

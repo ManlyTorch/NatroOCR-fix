@@ -49,6 +49,7 @@ Sleep 250
 common := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(common), Gdip_GraphicsClear(G,0xffae792f), Gdip_DeleteGraphics(G) ; Common
 mythic := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(mythic), Gdip_GraphicsClear(G,0xffbda4ff), Gdip_DeleteGraphics(G) ; Mythic
 
+found := false
 curItem := "BasicEgg"
 displayName := Map(
 	"BasicEgg", "Basic Eggs!",
@@ -56,6 +57,10 @@ displayName := Map(
 )
 
 Loop {
+	if found {
+		curItem := curItem = "BasicEgg" ? "RoyalJelly" : "BasicEgg"
+	}
+	found := false
 	itemRect := nm_InventorySearch(curItem,, 70)
 	if not itemRect {
 		MsgBox "You ran out of " displayName[curItem], "Basic Bee Replacement Program", 0x40010
@@ -69,7 +74,6 @@ Loop {
 	SendEvent "{Click " beeX " " beeY " 0}"
 	Sleep 100
 	Send "{Click Up}"
-	found := false
 	Loop 10 {
 		Sleep 100
         searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
@@ -81,8 +85,8 @@ Loop {
 			break
 		}
 
-		if (A_Index = 10) {
-			curItem := "RoyalJelly"
+		if (A_Index = 10) { ; force swap
+			curItem := curItem = "BasicEgg" ? "RoyalJelly" : "BasicEgg"
 			continue 2
 		}
 	}

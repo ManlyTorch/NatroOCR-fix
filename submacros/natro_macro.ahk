@@ -8,7 +8,7 @@ Natro Macro is free software: you can redistribute it and/or modify it under the
 either version 3 of the License, or (at your option) any later version.
 
 Natro Macro is distributed in the hope that it will be useful. This does not give you the right to steal sections from our code, distribute it under your own name, then slander the macro.
-
+ 
 You should have received a copy of the license along with Natro Macro. If not, please redownload from an official source.
 */
 
@@ -11826,7 +11826,7 @@ nm_FindItem(chosenItem, *) {
 		return nm_setShiftLock(prev_ShiftLock)
 	}
 	itemRect := nm_InventorySearch(chosenItem)
-	PostSubmacroMessage("Status", 0x5559, (itemRect ? itemRect.Y : 16) - 16, 1)
+	PostSubmacroMessage("Status", 0x5559, (itemRect ? itemRect.Y - 16 : 0), 1)
 	Sleep 1000
 	nm_OpenMenu()
 	nm_setShiftLock(Prev_ShiftLock)
@@ -18901,9 +18901,9 @@ ShellRun(prms*)
 }
 nm_onUnclaimedHiveSlot() {
 	Loop 3 {
-		if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 2).Has("Word") {
+		if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 3).Has("Word") {
 			slots[A_Index] := 1
-			break
+			return true
 		}
 	}
 }

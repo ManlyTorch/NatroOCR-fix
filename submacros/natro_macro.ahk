@@ -18900,9 +18900,9 @@ ShellRun(prms*)
 	shell.ShellExecute(prms*)
 }
 nm_onUnclaimedHiveSlot() {
-	Loop 3 {
-		if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 3).Has("Word") {
-			slots[A_Index] := 1
+	offsetY := GetYOffset()
+	Loop 6 {
+		if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, (A_Index - 1) // 2 + 1).Has("Word") {
 			return true
 		}
 	}

@@ -71,18 +71,6 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 		ActivateRoblox()
 		GetRobloxClientPos(hwnd)
 		scrollIntensity := 3
-		if itemIdx and remainingItems.Length = 0 {
-			remainingItems := itemArray.Clone()
-			remainingItems.RemoveAt(itemIdx)
-			
-			if lastItemIdx { ; Start from last searched item.
-				if lastItemIdx > itemIdx {
-					remainingItems.Length := idx - 1
-				} else {
-					remainingItems.RemoveAt(1, lastItemIdx-1)
-				}
-			}
-		}
 		
 		searchResult := findTextInRect(itemName, windowX+100, windowY+150, 250, windowHeight-250,, filterItems)
 		words := searchResult["Words"]
@@ -98,6 +86,19 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 				}
 			}
 			break ; Item found and is fully visible, break the loop
+		}
+		
+		if itemIdx and remainingItems.Length = 0 {
+			remainingItems := itemArray.Clone()
+			remainingItems.RemoveAt(itemIdx)
+			
+			if lastItemIdx { ; Start from last searched item.
+				if lastItemIdx > itemIdx {
+					remainingItems.Length := itemIdx - 1
+				} else {
+					remainingItems.RemoveAt(1, lastItemIdx-1)
+				}
+			}
 		}
 		
 		if itemIdx {

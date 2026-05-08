@@ -17,8 +17,6 @@ Shrine := Map()
 
 #Include ../nm_image_assets/general/bitmaps.ahk
 
-giftedstar := Gdip_BitmapFromBase64("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAgMAAAC5YVYYAAAACVBMVEX9rDT+rDT/rDOj6H2ZAAAAFElEQVR42mNYtYoBgVYyrFoBYQMAf4AKnlh184sAAAAASUVORK5CYII=")
-
 if (MsgBox("WELCOME TO THE BASIC BEE REPLACEMENT PROGRAM!!!!!``nMade by anniespony#8135``n``nMake sure BEE SLOT TO CHANGE is always visible``nDO NOT MOVE THE SCREEN ORRESIZE WINDOW FROM NOW ON.``nMAKE SURE AUTO-JELLY IS DISABLED!!", "Basic Bee Replacement Program", 0x40001) = "Cancel")
 	ExitApp
 
@@ -46,13 +44,11 @@ Gdip_GraphicsClear(G), Gdip_FillRectangle(G, pBrush := Gdip_BrushCreateSolid(0xd
 Gdip_TextToGraphics(G, "Hatching... Right Click or Shift to Stop!", "x0 y0 cffff5f1f Bold Center vCenter s24", "Tahoma", windowWidth, 38)
 UpdateLayeredWindow(StatusBar.Hwnd, hdc, windowX, windowY, windowWidth, 38)
 SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc), Gdip_DeleteGraphics(G)
+try Gdip_Shutdown(pToken)
 Hotkey "Shift", ExitFunc, "On"
 Hotkey "RButton", ExitFunc, "On"
 Hotkey "F11", ExitFunc, "On"
 Sleep 250
-
-common := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(common), Gdip_GraphicsClear(G,0xffae792f), Gdip_DeleteGraphics(G) ; Common
-mythic := Gdip_CreateBitmap(2,2), G := Gdip_GraphicsFromImage(mythic), Gdip_GraphicsClear(G,0xffbda4ff), Gdip_DeleteGraphics(G) ; Mythic
 
 found := false
 curItem := "BasicEgg"
@@ -97,30 +93,23 @@ Loop {
 	}
 	Sleep 750
 
-	pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-155 "|" windowY+offsetY+((4*windowHeight)//10 - 135) "|310|205")
-	
-	if (Gdip_ImageSearch(pBMScreen, mythic, , 50, 165, 260, 205, 2, , , 5) = 5) { ; Mythic Hatched
+	text := StrLower(OCR.FromRect(windowX+windowWidth//2-155, windowY+offsetY+(windowHeight*4)//10 - 135, 310, 600, {scale:2}).Text)
+	if InStr(text, 'mythic') { ; Mythic Hatched
 		if (MsgBox("MYTHIC!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {
-			Gdip_DisposeImage(pBMScreen)
 			break
 		}
-	} else if (Gdip_ImageSearch(pBMScreen, giftedstar, , 0, 20, 130, 50, 5) = 1) {
-		if (Gdip_ImageSearch(pBMScreen, common, , 50, 165, 260, 205, 2, , , 5) = 5) { ; Gifted basic bee
+	} else if InStr(text, 'gifted') {
+		if InStr(text, 'basic') { ; Gifted basic bee
 			MsgBox "SUCCESS!!!!", "Basic Bee Replacement Program", 0x40020
-			Gdip_DisposeImage(pBMScreen)
 			break
 		} else if (MsgBox("GIFTED!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {  ; Non-Basic Gifted Hatched
-			Gdip_DisposeImage(pBMScreen)
 			break
 		}
 	}
-	Gdip_DisposeImage(pBMScreen)
 }
 ExitApp
 
 ExitFunc(*) {
-	try Gdip_DisposeImage(mythic), Gdip_DisposeImage(common)
 	try StatusBar.Destroy()
-	try Gdip_Shutdown(pToken)
 	ExitApp
 }

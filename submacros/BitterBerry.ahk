@@ -69,6 +69,7 @@ try {
 }
 Sleep 250
 
+rect := ''
 Loop {
     berryRect := nm_InventorySearch("bitterberry",, (A_Index = 1) ? 40 : 4)
     if berryRect == 0 {
@@ -84,23 +85,25 @@ Loop {
     SendEvent "{Click " beeX " " beeY " 0}"
     Sleep 100
     Send "{Click Up}"
-    Loop 10 {
-        Sleep 100
-        searchResult := findTextInRect("feed:", windowX+(54*windowWidth)//100-300, windowY+offsetY+(46*windowHeight)//100-59, 250, 100, 2)
-        if searchResult.Has("Word") {
-            rect := searchResult["Word"].BoundingRect
-            SendEvent "{Click " rect.X + 140 " " rect.Y + 5 "}" ; Click Number
+    if !rect { ; should be fine to cache
+        Loop 20 {
             Sleep 100
-            Loop StrLen(bitterberrynos) {
-                SendEvent "{Text}" SubStr(bitterberrynos, A_Index, 1)
-                Sleep 100
+            searchResult := findTextInRect("feed:", windowX+windowWidth//2 - 200, windowY+windowHeight//2 - 100, 400, 250, 2)
+            if searchResult.Has("Word") {
+                rect := searchResult["Word"]
+                break
             }
-            SendEvent "{Click " rect.X " " rect.Y "}" ; Click Feed
-            break
         }
-        if (A_Index = 10) {
-            continue 2
+    }
+    if rect {
+        Sleep 700
+        SendEvent "{Click " rect.x + 140 " " rect.y + 5 "}" ; Click Number
+        Sleep 100
+        Loop StrLen(bitterberrynos) {
+            SendEvent "{Text}" SubStr(bitterberrynos, A_Index, 1)
+            Sleep 100
         }
+        SendEvent "{Click " rect.x " " rect.y "}" ; Click Feed
     }
     Sleep 750
     
@@ -114,6 +117,7 @@ Loop {
             SendEvent "{Click " windowX + (windowWidth//2 - 132) " " windowY + offsetY + ((4*windowHeight)//10 - 150) "}" ; Close Bee
         }
     }
+
     Gdip_DisposeImage(pBMScreen)
 }
 

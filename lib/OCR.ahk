@@ -166,7 +166,7 @@ findTextInRect(str, x, y?, w?, h?, options:=1, filterWords?, customCheck?) {
 
 	searchResult := Map()
 	searchResult["Words"] := words
-    searchResult["Obj"] := ocrResult
+    searchResult["OCRResult"] := ocrResult
     if IsSet(customCheck) {
         for idx, word in words {
             if customCheck(unspacedStr, words, idx, replacements) {

@@ -3,18 +3,21 @@
  * @param {Array} words Array of words from an OCRResult.Words
  * @returns {Array} The filtered Array of words
 */
-filterItems(words) {
-    filteredWords := Array()
-    for idx, word in words {
-        itemRect := word.BoundingRect
-        if itemRect.H > 11 {
-			fakeWord := Map()
-			fakeWord.Text := StrReplace(word.Text, "-")
-			fakeWord.BoundingRect := itemRect
-			filteredWords.Push(fakeWord)
-        }
-    }
-    return filteredWords
+filterHeight(height) {
+	func(words) {
+    	filteredWords := Array()
+    	for idx, word in words {
+    	    itemRect := word.BoundingRect
+    	    if itemRect.H > height {
+				fakeWord := Map()
+				fakeWord.Text := StrReplace(word.Text, "-")
+				fakeWord.BoundingRect := itemRect
+				filteredWords.Push(fakeWord)
+    	    }
+    	}
+		return filteredWords
+	}
+    return (words) => func(words)
 }
 
 itemArray := ["Cog", "Ticket", "SprinklerBuilder", "BeequipCase", "Gumdrops", "Coconut", "Stinger", "Snowflake", "MicroConverter", "Honeysuckle", "Whirligig", "FieldDice", "SmoothDice", "LoadedDice", "JellyBeans", "RedExtract", "BlueExtract", "Glitter", "Glue", "Oil", "Enzymes", "TropicalDrink", "PurplePotion", "SuperSmoothie", "MarshmallowBee", "Sprout", "MagicBean", "FestiveBean", "CloudVial", "BloomShaker", "NightBell", "BoxOFrogs", "AntPass", "BrokenDrive", "7ProngedCog", "RoboPass", "Translator", "SpiritPetal", "Present", "Treat", "StarTreat", "AtomicTreat", "SunflowerSeed", "Strawberry", "Pineapple", "Blueberry", "Bitterberry", "Neonberry", "MoonCharm", "GingerbreadBear", "AgedGingerbreadBear", "WhiteDrive", "RedDrive", "BlueDrive", "GlitchedDrive", "ComfortingVial", "InvigoratingVial", "MotivatingVial", "RefreshingVial", "SatisfyingVial", "NectarShowerVial", "PinkBalloon", "RedBalloon", "WhiteBalloon", "BlackBalloon", "SoftWax", "HardWax", "CausticWax", "SwirledWax", "Turpentine", "PaperPlanter", "TicketPlanter", "StickerPlanter", "FestivePlanter", "PlasticPlanter", "CandyPlanter", "RedClayPlanter", "BlueClayPlanter", "TackyPlanter", "PesticidePlanter", "HeatTreatedPlanter", "HydroponicPlanter", "PetalPlanter", "PlanterOfPlenty", "BasicEgg", "SilverEgg", "GoldEgg", "DiamondEgg", "MythicEgg", "StarEgg", "GiftedSilverEgg", "GiftedGoldEgg", "GiftedDiamondEgg", "GiftedMythicEgg", "RoyalJelly", "StarJelly", "BumbleBeeEgg", "GiftedExhaustedBeeEgg", "GiftedFrostyBeeEgg", "GiftedDiamondBeeEgg", "BumbleBeeJelly", "RageBeeJelly", "ShockedBeeJelly", "BearBeeJelly", "CobaltBeeJelly", "CrimsonBeeJelly", "FestiveBeeJelly", "GummyBeeJelly", "PhotonBeeJelly", "PuppyBeeJelly", "TabbyBeeJelly", "ViciousBeeJelly"]
@@ -72,7 +75,7 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 		GetRobloxClientPos(hwnd)
 		scrollIntensity := 3
 		
-		searchResult := findTextInRect(itemName, windowX+100, windowY+150, 250, windowHeight-250,, filterItems)
+		searchResult := findTextInRect(itemName, windowX+100, windowY+150, 250, windowHeight-250,, filterHeight(11))
 		words := searchResult["Words"]
 		if searchResult.Has("Word") {
 			itemRect := searchResult["Word"].BoundingRect
@@ -136,8 +139,13 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 			if !doubleCheck {
 				doubleCheck := true
 				continue
+			} else if !itemIdx {
+				break ; at the end of inventory
 			}
-			break ; at the end of inventory
+			; Somehow got lost in the inventory, change directions & reset known items.
+			scrollDir := scrollDir = 'Down' ? 'Up' : 'Down'
+			remainingItems := []
+			continue
 		}
 		
 		firstItem := firstWord.Text

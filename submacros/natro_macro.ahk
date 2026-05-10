@@ -1226,7 +1226,7 @@ SunflowerPlanters:=[["PetalPlanter", 1.5, 1.3415, 10.44] ; 2.01225
 
 ;quest data
 QuestBarGapSize := 10
-QuestBarSize := 50
+QuestBarSize := 40
 QuestBarInset := 16
 
 ;map: quest name, [objective array]
@@ -11438,18 +11438,9 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		offsetY := GetYOffset(hwnd)
 		;check that performance stats is disabled
 		GetRobloxClientPos(hwnd)
-		pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+36 "|" windowWidth "|24")
-		if ((Gdip_ImageSearch(pBMScreen, bitmaps["perfmem"], &pos, , , , , 2, , 5) = 1)
-		&& (Gdip_ImageSearch(pBMScreen, bitmaps["perfwhitefill"], , x := SubStr(pos, 1, (comma := InStr(pos, ",")) - 1), y := SubStr(pos, comma + 1), x + 17, y + 7, 2) = 0)) {
-			if ((Gdip_ImageSearch(pBMScreen, bitmaps["perfcpu"], &pos, x + 17, y, , y + 7, 2) = 1)
-			&& (Gdip_ImageSearch(pBMScreen, bitmaps["perfwhitefill"], , x := SubStr(pos, 1, (comma := InStr(pos, ",")) - 1), y := SubStr(pos, comma + 1), x + 17, y + 7, 2) = 0)) {
-				if ((Gdip_ImageSearch(pBMScreen, bitmaps["perfgpu"], &pos, x + 17, y, , y + 7, 2) = 1)
-				&& (Gdip_ImageSearch(pBMScreen, bitmaps["perfwhitefill"], , x := SubStr(pos, 1, (comma := InStr(pos, ",")) - 1), y := SubStr(pos, comma + 1), x + 17, y + 7, 2) = 0)) {
-					Send "^{F7}"
-				}
-			}
+		if findTextInRect('networkping', windowX, windowY+offsetY+36, windowWidth, 24, 2).Has('Word') {
+			Send '^{F7}'
 		}
-		Gdip_DisposeImage(pBMScreen)
 		;check to make sure you are not in dialog before reset
 		Loop 500
 		{

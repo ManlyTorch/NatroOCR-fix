@@ -44,7 +44,6 @@ Gdip_GraphicsClear(G), Gdip_FillRectangle(G, pBrush := Gdip_BrushCreateSolid(0xd
 Gdip_TextToGraphics(G, "Hatching... Right Click or Shift to Stop!", "x0 y0 cffff5f1f Bold Center vCenter s24", "Tahoma", windowWidth, 38)
 UpdateLayeredWindow(StatusBar.Hwnd, hdc, windowX, windowY, windowWidth, 38)
 SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc), Gdip_DeleteGraphics(G)
-try Gdip_Shutdown(pToken)
 Hotkey "Shift", ExitFunc, "On"
 Hotkey "RButton", ExitFunc, "On"
 Hotkey "F11", ExitFunc, "On"
@@ -93,7 +92,8 @@ Loop {
 	}
 	Sleep 750
 
-	text := StrLower(OCR.FromRect(windowX+windowWidth//2-155, windowY+offsetY+(windowHeight*4)//10 - 135, 310, 600, {scale:2}).Text)
+	OCRText := StrLower(OCR.FromRect(windowX+windowWidth//2-155, windowY+windowHeight//2 - 300, 310, 600, {scale:2}).Text)
+	text := SubStr(OCRText, InStr(OCRText, "."))
 	if InStr(text, 'mythic') { ; Mythic Hatched
 		if (MsgBox("MYTHIC!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {
 			break
@@ -110,6 +110,7 @@ Loop {
 ExitApp
 
 ExitFunc(*) {
+	try Gdip_Shutdown(pToken)
 	try StatusBar.Destroy()
 	ExitApp
 }

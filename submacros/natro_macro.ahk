@@ -20285,7 +20285,7 @@ nm_BlackQuestProg(){
 	if(!BlackQuestCheck)
 		return
 
-	questPos := nm_GetQuestForGiver('BuckoBee', BlackBear, &BlackQuest)
+	questPos := nm_GetQuestForGiver('BlackBear', BlackBear, &BlackQuest)
 
 	;Update Black quest progress in GUI
 	;also set next steps

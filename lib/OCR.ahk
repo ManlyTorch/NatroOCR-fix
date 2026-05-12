@@ -646,6 +646,7 @@ class OCR {
                 words := []
                 loop WordsCount {
                    ComCall(6, WordsList, "int", A_Index-1, "ptr*", Word:=this.__OCR.Word(this))
+                   Word.DefineProp('Line', {Value:this})
                    words.Push(Word)
                 }
                 this.DefineProp("Words", {Value:words})

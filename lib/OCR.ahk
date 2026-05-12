@@ -140,12 +140,13 @@ isUnspaced(unspacedStr, words, idx, max:=4) {
 **/
 findTextInRect(str, x, y?, w?, h?, options:=1, filterWords?, customCheck?) {
 	ocrResult := {}
+    ocrOptions := {lang:'en-us'}
     if !IsSet(y) or not (y is Integer) {
         ocrResult := x
         if x is Integer {
-            ocrResult := OCR.FromBitmap(x)
+            ocrResult := OCR.FromBitmap(x, ocrOptions)
         } else if x is String {
-            ocrResult := OCR.FromFile(x)
+            ocrResult := OCR.FromFile(x, ocrOptions)
         }
         if IsSet(y) {
             filterWords := y
@@ -154,8 +155,14 @@ findTextInRect(str, x, y?, w?, h?, options:=1, filterWords?, customCheck?) {
             customCheck := w
         }
 	} else {
-        options := options is Integer ? {scale: options} : options
-		ocrResult := OCR.FromRect(x, y, w, h, options)
+        if options is Integer {
+            ocrOptions.scale := options
+        } else {
+            for idx, val in options {
+                options.%idx% := val
+            }
+        }
+		ocrResult := OCR.FromRect(x, y, w, h, ocrOptions)
 	}
 
 	unspacedStr := StrReplace(str, " ",,, &replacements)

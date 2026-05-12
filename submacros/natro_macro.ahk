@@ -11458,7 +11458,7 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		MouseMove windowX+350, windowY+offsetY+100
 		;check to make sure you are not in a yes/no prompt
 		GetRobloxClientPos(hwnd)
-		searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150, 2)
+		searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
 		if searchResult.Has("Word") {
 			rect := searchResult["Word"].BoundingRect
 			MouseMove rect.x, rect.y
@@ -21949,7 +21949,7 @@ ba_harvestPlanter(planterNum){
 		GetRobloxClientPos(hwnd)
 		if ((HarvestFullGrown = 1) && !PlanterHarvestNow%planterNum%) {
 			loop 3 {
-				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150, 2)
+				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
 				if searchResult.Has("Word") {
 					rect := searchResult["Word"].BoundingRect
 					MouseMove rect.x, rect.y
@@ -22452,7 +22452,7 @@ mp_HarvestPlanter(PlanterIndex) {
 		GetRobloxClientPos(hwnd)
 		if ((PlanterHarvestFull%PlanterIndex% == "Full") && !PlanterHarvestNow%PlanterIndex%) {
 			loop 3 {
-				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150, 2)
+				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
 				if searchResult.Has("Word") {
 					rect := searchResult["Word"].BoundingRect
 					MouseMove rect.x, rect.y

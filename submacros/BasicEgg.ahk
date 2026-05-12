@@ -49,7 +49,6 @@ Hotkey "RButton", ExitFunc, "On"
 Hotkey "F11", ExitFunc, "On"
 Sleep 250
 
-found := false
 curItem := "BasicEgg"
 displayName := Map(
 	"BasicEgg", "Basic Eggs!",
@@ -57,10 +56,6 @@ displayName := Map(
 )
 
 Loop {
-	if found {
-		curItem := curItem = "BasicEgg" ? "RoyalJelly" : "BasicEgg"
-	}
-	found := false
 	itemRect := nm_InventorySearch(curItem,, 70)
 	if not itemRect {
 		MsgBox "You ran out of " displayName[curItem], "Basic Bee Replacement Program", 0x40010
@@ -74,12 +69,14 @@ Loop {
 	SendEvent "{Click " beeX " " beeY " 0}"
 	Sleep 100
 	Send "{Click Up}"
+	found := false
 	Loop 10 {
 		Sleep 100
         searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
 		if searchResult.Has("Word") {
-			rect := searchResult["Word"].BoundingRect
-			Click rect.x, rect.y
+			itemRect := searchResult["Word"].BoundingRect
+			SendEvent "{Click " itemRect.x " " itemRect.y " 0}"
+			Click
 			found := true
 		} else if found {
 			break
@@ -92,19 +89,50 @@ Loop {
 	}
 	Sleep 750
 
-	OCRText := StrLower(OCR.FromRect(windowX+windowWidth//2-155, windowY+windowHeight//2 - 300, 310, 600, {scale:2}).Text)
-	text := SubStr(OCRText, InStr(OCRText, "."))
-	if InStr(text, 'mythic') { ; Mythic Hatched
+	beeText := ''
+	rarityText := ''
+	Loop 8 {
+		lines := OCR.FromRect(windowX+windowWidth//2-155, windowY+windowHeight//2 - 300, 310, 600, {scale:3}).Lines
+		rarityLine := 4
+		beeLine := 3
+
+		if (InStr(StrLower(lines[1].Text), 'hatched') or InStr(StrLower(lines[1].Text), 'transformed')) and lines[2].Text != 'x' {
+			rarityLine -= 1
+			beeLine -= 1
+		}
+
+		rarityText := StrLower(lines[rarityLine].Text)
+		beeText := StrLower(lines[beeLine].Text)
+
+		if !InStr(beeText, 'bee') {
+			Sleep 100
+			if A_Index == 8 { ; Probably gifted basic bee
+				; Windows EN-US OCR isn't able to detect it for whatever reason
+				if (MsgBox("Couldn't detect the bee type, would you like to keep it?", "Basic Bee Replacement Program", 0x40024) = "Yes") {
+					break 2
+				}
+			}
+		} else {
+			break
+		}
+	}
+
+	if InStr(rarityText, 'mythic') { ; Mythic Hatched
 		if (MsgBox("MYTHIC!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {
 			break
 		}
-	} else if InStr(text, 'gifted') {
-		if InStr(text, 'basic') { ; Gifted basic bee
+	} else if InStr(beeText, 'gifted') {
+		MsgBox rarityText '`n' beeText
+		if InStr(beeText, 'basic') { ; Gifted basic bee
 			MsgBox "SUCCESS!!!!", "Basic Bee Replacement Program", 0x40020
 			break
 		} else if (MsgBox("GIFTED!!!!``nKeep this?", "Basic Bee Replacement Program", 0x40024) = "Yes") {  ; Non-Basic Gifted Hatched
 			break
 		}
+	} else if !InStr(rarityText, 'common') { ; got a non basic bee, use basic egg again
+		curItem := 'BasicEgg'
+	} else {
+		curItem := 'RoyalJelly'
 	}
 }
 ExitApp

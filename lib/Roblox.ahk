@@ -44,34 +44,8 @@ GetRobloxHWND()
 ; Optionally takes a known window handle to skip GetRobloxHWND call
 ; Returns: offset (integer), defaults to 0 on fail (ByRef param fail is then set to 1, else 0)
 GetYOffset(hwnd?, &fail?) {
-	static hRoblox := 0, offset := 0
-    if !IsSet(hwnd) {
-        hwnd := GetRobloxHWND()
-	}
-
-	if (hwnd = hRoblox) {
-		fail := 0
-		return offset
-	} else if WinExist("ahk_id " hwnd) {
-		try WinActivate "Roblox"
-		GetRobloxClientPos(hwnd)
-
-		Loop 20 {
-			TextRegion := findTextInRect("pollen", windowX+windowWidth//2, windowY, 60, 100, 3)
-			if TextRegion.Has("Word") {
-				hRoblox := hwnd, fail := 0
-				return offset := TextRegion["Word"].BoundingRect.y - windowY - 10
-			} else {
-				if (A_Index = 20) {
-					fail := 1
-					return 0 ; default offset, change this if needed
-				} else {
-					Sleep 50
-				}				
-			}
-		}
-	}
-	return 0
+	fail := 0
+	return 22 ; ALWAYS 22, why was there any detection here anyway?
 }
 
 ; Returns: 1 = successful; 0 = TargetError

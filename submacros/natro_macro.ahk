@@ -1226,7 +1226,7 @@ SunflowerPlanters:=[["PetalPlanter", 1.5, 1.3415, 10.44] ; 2.01225
 
 ;quest data
 QuestBarGapSize := 10
-QuestBarSize := 40
+QuestBarSize := 50
 QuestBarInset := 16
 
 ;map: quest name, [objective array]
@@ -8299,7 +8299,7 @@ nm_BitterberryFeeder(*)
 	global BitterBerryPID
 	try ProcessClose(BitterBerryPID)
 	
-	exec := ComObject("WScript.shell").Exec('"' A_AhkPath '" /force "' A_ScriptDir "\BitterBerry.ahk" '"')
+	exec := ComObject("WScript.shell").Exec('"' exe_path64 '" /force "' A_ScriptDir "\BitterBerry.ahk" '"')
 	return (BitterBerryPID := exec.ProcessID)
 }
 nm_BasicEggHatcher(*)
@@ -8313,7 +8313,7 @@ nm_BasicEggHatcher(*)
 	global EggHatcherPID
 	try ProcessClose(EggHatcherPID)
 	
-	exec := ComObject("WScript.shell").Exec('"' A_AhkPath '" /force "' A_ScriptDir "\BasicEgg.ahk" '"')
+	exec := ComObject("WScript.shell").Exec('"' exe_path64 '" /force "' A_ScriptDir "\BasicEgg.ahk" '"')
 	return (EggHatcherPID := exec.ProcessID)
 }
 nm_GenerateBeeList(*)
@@ -9925,7 +9925,7 @@ blc_mutations(*) {
 	global AutoJellyPID
 	try ProcessClose(AutoJellyPID)
 	
-	exec := ComObject("WScript.shell").Exec('"' A_AhkPath '" /force "' A_ScriptDir "\AutoJelly.ahk" '"')
+	exec := ComObject("WScript.shell").Exec('"' exe_path64 '" /force "' A_ScriptDir "\AutoJelly.ahk" '"')
 	return (AutoJellyPID := exec.ProcessID)
 }
 
@@ -11438,12 +11438,11 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		offsetY := GetYOffset(hwnd)
 		;check that performance stats is disabled
 		GetRobloxClientPos(hwnd)
-		if findTextInRect('networkping', windowX, windowY+offsetY+36, windowWidth, 24, 2).Has('Word') {
+		if findTextInRect('networkping', windowX, windowY+offsetY+36, windowWidth, windowHeight//15, 2).Has('Line') {
 			Send '^{F7}'
 		}
 		;check to make sure you are not in dialog before reset
-		Loop 500
-		{
+		Loop 500 {
 			GetRobloxClientPos(hwnd)
 			pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-50 "|" windowY+2*windowHeight//3 "|100|" windowHeight//3)
 			if (Gdip_ImageSearch(pBMScreen, bitmaps["dialog"], &pos, , , , , 10, , 3) != 1) {
@@ -11459,8 +11458,8 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		;check to make sure you are not in a yes/no prompt
 		GetRobloxClientPos(hwnd)
 		searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-		if searchResult.Has("Word") {
-			rect := searchResult["Word"].BoundingRect
+		if searchResult.Has("Line") {
+			rect := searchResult["Line"].Rect
 			MouseMove rect.x, rect.y
 			Click
 			MouseMove windowX+350, windowY+offsetY+100
@@ -11589,9 +11588,10 @@ nm_HealthBar() {
 nm_ConfirmAtHive(){
 	ActivateRoblox()
 	GetRobloxClientPos()
-	Loop 4 {
-		if findTextInRect("make", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, 2).Has("Word") {
-			return 1
+	x := windowX+windowWidth//2-250, y := windowY+offsetY+windowHeight//17
+	Loop 6 {
+		if findTextInRect("make", x, y, 500, 125, (A_Index - 1) // 2 + 1).Has("Line") {
+			return true
 		}
 	}
 }
@@ -11741,64 +11741,40 @@ nm_AmuletPrompt(decision:=0, type:=0, *){
 	else
 		ActivateRoblox()
 
-	pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY "|500|" windowHeight)
-
-	if (Gdip_ImageSearch(pBMScreen, bitmaps["keep"], &pos, , , , , 2, , 2) = 1)
-	{
-		switch decision, 0
-		{
-			case "keep",1:
+	searchResult := findTextInRect("keep", windowX+windowWidth//2-250, windowY, 500, windowHeight)
+	if searchResult.Has("Line") {
+		line := searchResult["Line"]
+		if decision = "keep" or decision = 1 {
 			if type = "Ant" || type = "King Beetle" || type = "Shell"
 				nm_setStatus("Keeping", type " Amulet")	
-			Gdip_DisposeImage(pBMScreen)
-			loop 10
-			{
+			loop 10 {
 				MouseMove windowX+350, windowY+offsetY+100
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY "|500|" windowHeight)
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["keep"], &pos, , , , , 2, , 2) = 1)
-				{
-					MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1)+10, windowY+SubStr(pos, InStr(pos, ",")+1)+10, 5
+				searchResult := findTextInRect("keep", windowX+windowWidth//2-250, windowY, 500, windowHeight)
+				if searchResult.Has("Line") {
+					MouseMove searchResult["Line"].X+25, searchResult["Line"].Y, 5
 					Sleep 200
 					Click
 				} 
-				Gdip_DisposeImage(pBMScreen)
 			}
-			nm_setShiftLock(Prev_ShiftLock)
-			return 1
-
-			case "replace",2:
-			MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1)+190, windowY+SubStr(pos, InStr(pos, ",")+1)+10, 5
+		} else if decision = "replace" or decision = 2 {
+			MouseMove line.X+225, line.Y, 5
 			Click
-			Gdip_DisposeImage(pBMScreen)
-			Loop 25
-			{
+			Loop 25 {
 				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-				if searchResult.Has("Word") {
-					rect := searchResult["Word"].BoundingRect
+				if searchResult.Has("Line") {
+					rect := searchResult["Line"].Rect
 					MouseMove rect.x, rect.y
 					Click
 					break
 				}
 				Sleep 100
 			}
-			nm_setShiftLock(Prev_ShiftLock)
-			return 1
-
-			case "obtained",3:
+		} else if decision = "obtained" or decision = 3 {
 			nm_setStatus("Obtained", type " Amulet")
-			Gdip_DisposeImage(pBMScreen)
-			nm_setShiftLock(Prev_ShiftLock)
-			return 1
-
-			default:
-			Gdip_DisposeImage(pBMScreen)
-			nm_setShiftLock(Prev_ShiftLock)
-			return 1
 		}
-	}
-	else
-	{
-		Gdip_DisposeImage(pBMScreen)
+		nm_setShiftLock(Prev_ShiftLock)
+		return 1
+	} else {
 		nm_setShiftLock(Prev_ShiftLock)
 		return 0
 	}
@@ -11864,11 +11840,12 @@ nm_gotoCannon() {
 		DllCall("GetSystemTimeAsFileTime","int64p",&s:=0)
 		n := s, f := s+200000000
 		while (n < f) {
-			if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
+			if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
 				success := 1
 				break
 			}
 			DllCall("GetSystemTimeAsFileTime","int64p",&n)
+			Sleep 20
 		}
 		nm_endWalk()
 
@@ -11879,7 +11856,7 @@ nm_gotoCannon() {
 					break
 				}
 				Sleep 500
-				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
+				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
 					break 2
 				} else {
 					movement := nm_Walk(1.5, LeftKey)
@@ -12272,21 +12249,16 @@ nm_Ant() { ;collect Ant Pass then do Challenge
 				nm_setStatus("Collected", "Ant Pass")
 				++AntPassNum
 				break
-			}
-			else {
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["passfull"], , , , , , 2, , 2) = 1) {
+			} else {
+				ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-200, windowY+offsetY, 400, 125,,, false))
+				if InStr(ocrResult, 'you') {
 					(AntPassNum < 10) && nm_setStatus("Confirmed", "10/10 Ant Passes")
 					AntPassNum:=10
-					Gdip_DisposeImage(pBMScreen)
 					break
-				}
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["passcooldown"], , , , , , 2, , 2) = 1) {
+				} else if InStr(ocrResult, ":") or InStr(ocrResult, "(") {
 					updateConfig()
-					Gdip_DisposeImage(pBMScreen)
 					break
 				}
-				Gdip_DisposeImage(pBMScreen)
 			}
 		}
 
@@ -12333,10 +12305,9 @@ nm_Ant() { ;collect Ant Pass then do Challenge
 						sleep 1000
 					}
 					click "up"
-				}
-				else {
-					pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-					if (Gdip_ImageSearch(pBMScreen, bitmaps["passnone"], , , , , , 2, , 2) = 1) {
+				} else {
+					ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-200, windowY+offsetY, 400, 125,,, false))
+					if InStr(ocrResult, "use").Has("Line") {
 						Gdip_DisposeImage(pBMScreen)
 						AntPassNum:=0
 						if ((AntPassBuyCheck = 1) && (A_Index = 1)) {
@@ -12379,7 +12350,6 @@ nm_Ant() { ;collect Ant Pass then do Challenge
 							break
 						}
 					}
-					Gdip_DisposeImage(pBMScreen)
 				}
 			}
 		}
@@ -12415,21 +12385,16 @@ nm_RoboPass(){
 				nm_setStatus("Collected", "Robo Pass")
 				++RoboPassNum
 				break
-			}
-			else {
-				pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-200 "|" windowY+offsetY "|400|125")
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["passfull"], , , , , , 2, , 2) = 1) {
+			} else {
+				ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-200, windowY+offsetY, 400, 125,,, false))
+				if InStr(ocrResult, "you") {
 					(RoboPassNum < 10) && nm_setStatus("Confirmed", "10/10 Robo Passes")
 					RoboPassNum:=10
-					Gdip_DisposeImage(pBMScreen)
 					break
-				}
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["passcooldown"], , , , , , 2, , 2) = 1) {
+				} else if InStr(ocrResult, ":") or InStr(ocrResult, "(") {
 					updateConfig()
-					Gdip_DisposeImage(pBMScreen)
 					break
 				}
-				Gdip_DisposeImage(pBMScreen)
 			}
 		}
 	}
@@ -13520,9 +13485,9 @@ nm_StickerPrinter(){
 				loop 16 {
 					Sleep 250
 					searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-					if searchResult.Has("Word") {
-						rect := searchResult["Word"].BoundingRect
-						MouseMove rect.x, rect.y
+					if searchResult.Has("Line") {
+						line := searchResult["Line"]
+						MouseMove line.x, line.y
 						Sleep 150
 						Click
 						Sleep 100
@@ -13584,21 +13549,18 @@ nm_StickerStack(resetBeforeTravel := 1){
 			sendinput "{" SC_E " down}"
 			Sleep 100
 			sendinput "{" SC_E " up}"
-			sleep 500 ;//todo: wait for GUI with timeout instead of fixed time
+			sleep 150 ;//todo: wait for GUI with timeout instead of fixed time
 
 			; detect stack boost time
 			stackTime := 0
-			Loop 2 {
-				ocrResult := OCR.FromRect(windowX+windowWidth//2-275, windowY+4*windowHeight//10, 550, 220, {scale:2})
-				words := ocrResult.Words
-				for idx, word in words {
-					txt := StrLower(word.Text)
-					if txt != "stack" {
-						continue
-					}
-					Loop 2 {
-						txt .= StrLower(words[idx + A_Index].Text)
-					}
+			Loop 20 {
+				ocrResult := RapidOcr.FromRect(windowX+windowWidth//2-275, windowY+4*windowHeight//10, 550, 220, 2)
+				if !ocrResult {
+					Sleep 100
+					continue
+				}
+				for idx, line in ocrResult.Lines {
+					txt := StrLower(line.Text)
 					if RegExMatch(txt, "stackboost\(x(\d+)", &match) {
 						if match.Count {
 							stackTime := 900 + 10 * Integer(match[1])
@@ -18892,8 +18854,9 @@ ShellRun(prms*)
 }
 nm_onUnclaimedHiveSlot() {
 	offsetY := GetYOffset()
+	x := windowX+windowWidth//2-250, y := windowY+offsetY+windowHeight//17
 	Loop 6 {
-		if findTextInRect("claim", windowX+windowWidth//2-250, windowY+offsetY, 500, 200, (A_Index - 1) // 2 + 1).Has("Word") {
+		if findTextInRect("claim", x, y, 500, 125, (A_Index - 1) // 2 + 1).Has("Line") {
 			return true
 		}
 	}
@@ -19730,13 +19693,10 @@ nm_GetQuestForGiver(questGiver, quests?, &activeQuest?) {
 	lineText := ''
 	; search for the quest.
 	Loop 70 {
-		searchResult := findTextInRect(questGiver ':', windowX, windowY, 360, windowHeight, 2)
-		if !searchResult.Has('Word') {
-			searchResult := findTextInRect(questGiver, searchResult['OCRResult'])
-		}
-		if searchResult.Has('Word') {
-			questPos := [searchResult['Word'].x, searchResult['Word'].y + searchResult['Word'].h + 25]
-			lineText := StrLower(searchResult['Word'].Line.Text)
+		searchResult := findTextInRect(questGiver, windowX, windowY+150, 360, windowHeight-150, 2, filterQuests)
+		if searchResult.Has('Line') {
+			questPos := [searchResult['Line'].x, searchResult['Line'].y + searchResult['Line'].h + 10]
+			lineText := StrLower(searchResult['Line'].Text)
 			if (A_Index > 1)
 				Gdip_DisposeImage(pBMLog)
 			break
@@ -19782,38 +19742,61 @@ nm_GetQuestForGiver(questGiver, quests?, &activeQuest?) {
 			}
 			for key, value in quests {
 				if isQuest(key, checkLine) {
-					break
+					break 2
 				}
 			}
 		}
 	}
 
+	filterQuests(lines) {
+    	filteredLines := Array()
+    	for idx, line in lines {
+			line.Text := MultiStrReplace(line.Text, ":", "", ";", "", "-", "", " ", "")
+			filteredLines.Push(line)
+    	}
+		return filteredLines
+	}
+
 	isQuest(questName, checkLine) {
+		filteredQuestName := StrLower(MultiStrReplace(questName, ":", "", ";", "", "-", "", " ", ""))
 		if checkLine {
-			if !InStr(lineText, StrLower(questName)) {
+			if !InStr(lineText, filteredQuestName) {
 				return false
 			}
 		} else {
-			if !findTextInRect(questName, windowX, windowY, 500, windowHeight, 2, filterHeight(11)).Has('Word') {
+			if !findTextInRect(filteredQuestName, windowX, windowY + 150, 500, windowHeight-150, 2, filterQuests).Has('Line') {
 				return false
 			}
 		}
 
 		activeQuest := questName
-
 		; make sure full quest is visible
-		questName := StrReplace(questName, '-')
-		searchResult := findTextInRect(questName, windowX, windowY, 500, windowHeight, 2, filterHeight(11))
+		questSteps:=quests[questName].Length
 		loop 5 {
-			word := searchResult['Word']
-			words := searchResult['Words']
-			if Abs(words[words.Length].y - word.y) <= word.h {
-				Send "{WheelDown 1}"
-				Sleep 100
-				searchResult := findTextInRect(questName, windowX, windowY, 500, windowHeight, 2, filterHeight(11))
-			} else {
-				questPos := [word.x, word.y + word.h + 25]
-				break
+			found:=0
+			NextY:=questPos[2]
+			loop questSteps {
+				try
+					result := ImageSearch(&x, &y, windowX+QuestBarInset, NextY, windowX+QuestBarInset+300, NextY+QuestBarGapSize, "*5 nm_image_assets\questbargap.png")
+				catch
+					result := 0
+				if (result = 1) {
+					NextY:=NextY+QuestBarSize
+					found:=found+1
+					if found >= questSteps
+						break 2
+				} else {
+					break
+				}
+			}
+
+			MouseMove windowX+30, windowY+offsetY+225
+			Sleep 50
+			Send "{WheelDown 1}"
+			Sleep 500
+			searchResult := findTextInRect(questGiver, windowX, windowY+150, 360, windowHeight-150, 2, filterQuests)
+			if searchResult.Has('Line') {
+				questPos := [searchResult['Line'].x, searchResult['Line'].y + searchResult['Line'].h + 10]
 			}
 		}
 		return true
@@ -20586,7 +20569,7 @@ nm_Feed(food) {
 
 		searchResult := findTextInRect("feed:", windowX+(54*windowWidth)//100-300, windowY+offsetY+(46*windowHeight)//100-59, 250, 100, 2)
 		foodPos := nm_InventorySearch(food)
-		if !foodPos or searchResult.Has("Word") {
+		if !foodPos or searchResult.Has("Line") {
 			break
 		}
 
@@ -20596,15 +20579,15 @@ nm_Feed(food) {
 	Loop 20 {
 		Sleep 100
 		searchResult := findTextInRect("feed:", windowX+(54*windowWidth)//100-300, windowY+offsetY+(46*windowHeight)//100-59, 250, 100, 2)
-		if searchResult.Has("Word") {
-			rect := searchResult["Word"].BoundingRect
-			SendEvent "{Click " rect.X + 140 " " rect.Y + 5 "}" ; Click Number
+		if searchResult.Has("Line") {
+			line := searchResult["Line"]
+			SendEvent "{Click " line.X + 140 " " line.Y + 5 "}" ; Click Number
 			Sleep 100
 			Loop 3 {
 				Send "{Text}" (A_Index == 1 ? "1" : "0")
 				Sleep 100
 			}
-			SendEvent "{Click " rect.X " " rect.Y "}" ; Click Feed
+			SendEvent "{Click " line.X " " line.Y "}" ; Click Feed
 			nm_setStatus("Completed", "Feed " food)
 			break
 		}
@@ -20786,10 +20769,11 @@ nm_PathVars(){
 			DllCall("GetSystemTimeAsFileTime","int64p",&s:=0)
 			n := s, f := s+100000000
 			while (n < f) {
-				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
+				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
 					success := 1
 					break
 				}
+				Sleep 20
 				DllCall("GetSystemTimeAsFileTime","int64p",&n)
 			}
 			Send "{" RightKey " up}"
@@ -20801,7 +20785,7 @@ nm_PathVars(){
 						break
 					}
 					Sleep 500
-					if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Word") {
+					if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
 						break 2
 					} else {
 						nm_Walk(1.5, LeftKey)
@@ -21817,7 +21801,7 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0, ba:=1) {
 		MouseClickDrag "Left", windowX+30, yPos, windowX+windowWidth//2, windowY+windowHeight//2, 5
 		Sleep 200
 		
-		if findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150).Has("Word") {
+		if findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150).Has("Line") {
 			break ; yes detected.
 		}
 	}
@@ -21825,9 +21809,9 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0, ba:=1) {
 		GetRobloxClientPos(hwnd)
 		loop 3 {
 			searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-			if searchResult.Has("Word") {
-				rect := searchResult["Word"].BoundingRect
-				MouseMove rect.x, rect.y
+			if searchResult.Has("Line") {
+				line := searchResult["Line"]
+				MouseMove line.x, line.y
 				Sleep 150
 				Click
 				Sleep 100
@@ -21950,9 +21934,9 @@ ba_harvestPlanter(planterNum){
 		if ((HarvestFullGrown = 1) && !PlanterHarvestNow%planterNum%) {
 			loop 3 {
 				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-				if searchResult.Has("Word") {
-					rect := searchResult["Word"].BoundingRect
-					MouseMove rect.x, rect.y
+				if searchResult.Has("Line") {
+					line := searchResult["Line"]
+					MouseMove line.x, line.y
 					Sleep 150
 					Click
 					sleep 100
@@ -21964,9 +21948,9 @@ ba_harvestPlanter(planterNum){
 		} else {
 			loop 3 {
 				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-				if searchResult.Has("Word") {
-					rect := searchResult["Word"].BoundingRect
-					MouseMove rect.x, rect.y
+				if searchResult.Has("Line") {
+					line := searchResult["Line"]
+					MouseMove line.x, line.y
 					Sleep 150
 					Click
 					Sleep 100
@@ -22453,9 +22437,9 @@ mp_HarvestPlanter(PlanterIndex) {
 		if ((PlanterHarvestFull%PlanterIndex% == "Full") && !PlanterHarvestNow%PlanterIndex%) {
 			loop 3 {
 				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-				if searchResult.Has("Word") {
-					rect := searchResult["Word"].BoundingRect
-					MouseMove rect.x, rect.y
+				if searchResult.Has("Line") {
+					line := searchResult["Line"]
+					MouseMove line.x, line.y
 					Sleep 150
 					Click
 					sleep 100
@@ -22470,9 +22454,9 @@ mp_HarvestPlanter(PlanterIndex) {
 		} else {
 			loop 3 {
 				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-				if searchResult.Has("Word") {
-					rect := searchResult["Word"].BoundingRect
-					MouseMove rect.x, rect.y
+				if searchResult.Has("Line") {
+					line := searchResult["Line"]
+					MouseMove line.x, line.y
 					Sleep 150
 					Click
 					Sleep 100

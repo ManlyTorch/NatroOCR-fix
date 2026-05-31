@@ -55,36 +55,79 @@ displayName := Map(
 	"RoyalJelly", "Royal Jellies!"
 )
 
+itemRects := Map()
+itemsRemaining := Map(
+	"BasicEgg", 0,
+	"RoyalJelly", 0
+)
+itemUses := Map(
+	"BasicEgg", 0,
+	"RoyalJelly", 0
+)
+yesRect := ''
+yesColor := ''
 Loop {
-	itemRect := nm_InventorySearch(curItem,, 70)
-	if not itemRect {
-		MsgBox "You ran out of " displayName[curItem], "Basic Bee Replacement Program", 0x40010
-		break
+	foundLine := itemRects.Has(curItem) ? itemRects[curItem] : ''
+	if not foundLine or itemUses[curItem] >= itemsRemaining[curItem] // 6 {
+		otherItem := curItem  = "BasicEgg" ? "RoyalJelly" : "BasicEgg"
+		itemUses[curItem] := 0
+		foundLine := nm_InventorySearch(curItem,,, 1, true)
+		if !foundLine {
+			MsgBox "You ran out of " displayName[curItem], "Basic Bee Replacement Program", 0x40010
+			break
+		}
+		itemsRemaining[curItem] := foundLine.ItemsRemaining
+
+		itemLines := foundLine.items
+		otherLine := itemLines.Has(otherItem) ? itemLines[otherItem] : ''
+		if otherLine and itemLines.Has(otherLine.foundIdx + 1) { ; store the rect, other item is fully visible no need to search for the item, unless it can't find it.
+			getRemainingItems(foundLine, otherLine)
+			itemsRemaining[otherItem] := otherLine.ItemsRemaining
+
+			itemRects[curItem] := foundLine
+			itemRects[otherItem] := otherLine
+		}
+	} else {
+		itemUses[curItem] += 1
 	}
 
 	GetRobloxClientPos(hwnd)
-	SendEvent "{Click " windowX + 30 " " itemRect.Y + itemRect.H " 0}"
+	SendEvent "{Click " windowX + 30 " " foundLine.Y + foundLine.H " 0}"
 	Send "{Click Down}"
 	Sleep 100
 	SendEvent "{Click " beeX " " beeY " 0}"
 	Sleep 100
 	Send "{Click Up}"
-	found := false
-	Loop 10 {
-		Sleep 100
-        searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
-		if searchResult.Has("Word") {
-			itemRect := searchResult["Word"].BoundingRect
-			SendEvent "{Click " itemRect.x " " itemRect.y " 0}"
-			Click
-			found := true
-		} else if found {
-			break
+	detectedYes := false
+	if yesRect {
+		Loop 10 {
+			Sleep 100
+			pixelColor := PixelGetColor(yesRect.X, yesRect.Y)
+			if pixelColor = yesColor {
+				SendEvent "{Click " yesRect.X " " yesRect.Y " 0}"
+				Click
+				detectedYes := true
+				break
+			}
 		}
+	}
+	if !detectedYes {
+		Loop 10 {
+			Sleep 100
+			searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+			if searchResult.Has("Line") {
+				line := searchResult["Line"]
+				yesRect := line
+				yesColor := PixelGetColor(line.X, line.Y)
+				SendEvent "{Click " line.x " " line.y " 0}"
+				Click
+				break
+			}
 
-		if (A_Index = 10) { ; force swap
-			curItem := curItem = "BasicEgg" ? "RoyalJelly" : "BasicEgg"
-			continue 2
+			if (A_Index = 10) { ; force swap
+				curItem := curItem = "BasicEgg" ? "RoyalJelly" : "BasicEgg"
+				continue 2
+			}
 		}
 	}
 	Sleep 750
@@ -92,28 +135,28 @@ Loop {
 	beeText := ''
 	rarityText := ''
 	Loop 8 {
-		lines := OCR.FromRect(windowX+windowWidth//2-155, windowY+windowHeight//2 - 300, 310, 600, {scale:3}).Lines
-		rarityLine := 4
-		beeLine := 3
-
-		if (InStr(StrLower(lines[1].Text), 'hatched') or InStr(StrLower(lines[1].Text), 'transformed')) and lines[2].Text != 'x' {
-			rarityLine -= 1
-			beeLine -= 1
+		ocrResult := RapidOcr.FromRect(windowX+windowWidth//2-155, windowY+windowHeight//2 - 300, 310, 600)
+		if !ocrResult {
+			continue
 		}
-
-		rarityText := StrLower(lines[rarityLine].Text)
-		beeText := StrLower(lines[beeLine].Text)
-
-		if !InStr(beeText, 'bee') {
-			Sleep 100
-			if A_Index == 8 { ; Probably gifted basic bee
-				; Windows EN-US OCR isn't able to detect it for whatever reason
-				if (MsgBox("Couldn't detect the bee type, would you like to keep it?", "Basic Bee Replacement Program", 0x40024) = "Yes") {
-					break 2
-				}
+		lines := ocrResult.Lines
+		if !lines.Length {
+			continue 2
+		}
+		Loop 6 {
+			i := A_Index
+			text := StrLower(lines[A_Index].Text)
+			if InStr(text, 'bee') and !InStr(text, 'your') and !InStr(text, 'this') and !InStr(text, 'an ') {
+				rarityText := StrLower(lines[A_Index + 1].Text)
+				beeText := StrLower(text)
+				break 2
 			}
-		} else {
-			break
+		}
+		Sleep 20
+		if A_Index == 8 {
+			if (MsgBox("Couldn't detect the bee type, would you like to keep it?", "Basic Bee Replacement Program", 0x40024) = "Yes")
+				break 2
+			continue 2
 		}
 	}
 
@@ -122,7 +165,7 @@ Loop {
 			break
 		}
 	} else if InStr(beeText, 'gifted') {
-		MsgBox rarityText '`n' beeText
+		curItem := 'BasicEgg'
 		if InStr(beeText, 'basic') { ; Gifted basic bee
 			MsgBox "SUCCESS!!!!", "Basic Bee Replacement Program", 0x40020
 			break

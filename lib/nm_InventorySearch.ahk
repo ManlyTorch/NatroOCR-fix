@@ -1,23 +1,26 @@
-﻿/**
- * Returns only item names that *should* be in the inventory
- * @param {Array} words Array of words from an OCRResult.Words
- * @returns {Array} The filtered Array of words
-*/
-filterHeight(height) {
-	func(words) {
-    	filteredWords := Array()
-    	for idx, word in words {
-    	    itemRect := word.BoundingRect
-    	    if itemRect.H > height {
-				fakeWord := Map()
-				fakeWord.Text := StrReplace(word.Text, "-")
-				fakeWord.BoundingRect := itemRect
-				filteredWords.Push(fakeWord)
-    	    }
-    	}
-		return filteredWords
+filterText(lines) {
+    filteredLines := Array()
+    for idx, line in lines {
+		line.Text := MultiStrReplace(line.Text, "-", '', ' ', '')
+		filteredLines.Push(line)
+    }
+	return filteredLines
+}
+
+MultiStrReplace(str, params*) {
+	if params is Map {
+		for needle, replacement in params {
+			str := StrReplace(str, needle, replacement)
+		}
+	} else {
+		Loop params.Length // 2 {
+			idx := (A_Index - 1) * 2 + 1
+			needle := params[idx]
+			replacement := params[idx + 1]
+			str := StrReplace(str, needle, replacement)
+		}
 	}
-    return (words) => func(words)
+	return str
 }
 
 itemArray := ["Cog", "Ticket", "SprinklerBuilder", "BeequipCase", "Gumdrops", "Coconut", "Stinger", "Snowflake", "MicroConverter", "Honeysuckle", "Whirligig", "FieldDice", "SmoothDice", "LoadedDice", "JellyBeans", "RedExtract", "BlueExtract", "Glitter", "Glue", "Oil", "Enzymes", "TropicalDrink", "PurplePotion", "SuperSmoothie", "MarshmallowBee", "Sprout", "MagicBean", "FestiveBean", "CloudVial", "BloomShaker", "NightBell", "BoxOFrogs", "AntPass", "BrokenDrive", "7ProngedCog", "RoboPass", "Translator", "SpiritPetal", "Present", "Treat", "StarTreat", "AtomicTreat", "SunflowerSeed", "Strawberry", "Pineapple", "Blueberry", "Bitterberry", "Neonberry", "MoonCharm", "GingerbreadBear", "AgedGingerbreadBear", "WhiteDrive", "RedDrive", "BlueDrive", "GlitchedDrive", "ComfortingVial", "InvigoratingVial", "MotivatingVial", "RefreshingVial", "SatisfyingVial", "NectarShowerVial", "PinkBalloon", "RedBalloon", "WhiteBalloon", "BlackBalloon", "SoftWax", "HardWax", "CausticWax", "SwirledWax", "Turpentine", "PaperPlanter", "TicketPlanter", "StickerPlanter", "FestivePlanter", "PlasticPlanter", "CandyPlanter", "RedClayPlanter", "BlueClayPlanter", "TackyPlanter", "PesticidePlanter", "HeatTreatedPlanter", "HydroponicPlanter", "PetalPlanter", "PlanterOfPlenty", "BasicEgg", "SilverEgg", "GoldEgg", "DiamondEgg", "MythicEgg", "StarEgg", "GiftedSilverEgg", "GiftedGoldEgg", "GiftedDiamondEgg", "GiftedMythicEgg", "RoyalJelly", "StarJelly", "BumbleBeeEgg", "GiftedExhaustedBeeEgg", "GiftedFrostyBeeEgg", "GiftedDiamondBeeEgg", "BumbleBeeJelly", "RageBeeJelly", "ShockedBeeJelly", "BearBeeJelly", "CobaltBeeJelly", "CrimsonBeeJelly", "FestiveBeeJelly", "GummyBeeJelly", "PhotonBeeJelly", "PuppyBeeJelly", "TabbyBeeJelly", "ViciousBeeJelly"]
@@ -27,6 +30,22 @@ for idx, item in itemArray {
 	items[idx] := [idx, item]
 }
 
+getRemainingItems(orgLine, line:=orgLine) {
+	lineIdx := line.idx
+	line.ItemsRemaining := 1
+	nextLine := orgLine.items[line.foundIdx + 1]
+	Loop nextLine.idx - lineIdx - 1 {
+		iterLine := orgLine.searchLines[A_Index + lineIdx]
+		if pos := InStr(iterLine.Text, 'x') {
+			int := MultiStrReplace(SubStr(iterLine.Text, pos + 1), "o", "0", "i", "1", "l", "1", "a", "4", "/", "7")
+			if IsInteger(int) {
+				line.ItemsRemaining := Integer(int)
+			}
+			break
+		}
+	}
+}
+
 /**
  * Looks for the given item in the invetory
  * @param {String | Integer} item The item you're searching for
@@ -34,16 +53,14 @@ for idx, item in itemArray {
  * @param {Integer} max max amount of attempts
  * @returns {Rect | Boolean} X,Y,W,H Map or false if it failed to find the item.
 */
-nm_InventorySearch(item, direction:="down", maxIter:=70) {
-	static lastItemIdx := 0
+nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemaining:=false) {
+	static firstItemIdx := 0, lastItemIdx := 0
 	nm_OpenMenu("itemmenu")
 	
 	itemIdx := 0
 	itemName := item
-	if items.Has(item) {
-		itemIdx := items[item][1]
-		itemName := items[item][2]
-	}
+	if items.Has(item)
+		itemIdx := items[item][1], itemName := items[item][2]
 	
 	; Activate roblox window and get it's current position and height
 	if !(hwnd := GetRobloxHWND())
@@ -52,109 +69,126 @@ nm_InventorySearch(item, direction:="down", maxIter:=70) {
 	ActivateRoblox()
 	GetRobloxClientPos(hwnd)
 	offsetY := GetYOffset(hwnd)
+
+	xAdd := getRemaining ? 0 : 100
+	xWidth := 250 + (getRemaining ? 100 : 0)
 	
 	; Scroll to the end of inventory IF item isn't known
 	if !itemIdx {
-		scrollDir := direction = "down" ? "Up" : "Down" 
-		lastItemIdx := 0
+		firstItemIdx := 0, lastItemIdx := 0
+		preScrollDir := direction = "down" ? "Up" : "Down"
 		Loop 10 {
 			SendEvent "{Click " windowX+30 " " windowY+offsetY+200 " 0}"
-			SendInput "{Wheel" scrollDir " 100}"
+			SendInput "{Wheel" preScrollDir " 100}"
 			Sleep 50
 		}
 	}
-	
-	itemRect := false
-	firstItem := ""
+
 	doubleCheck := false
-	clearViewCheck := false
-	remainingItems := []
+	foundIdx := 0, itemLines := ''
 	scrollDir := direction = "down" ? "Down" : "Up"
 	Loop maxIter { ; Start searching
 		ActivateRoblox()
 		GetRobloxClientPos(hwnd)
-		scrollIntensity := 3
-		
-		searchResult := findTextInRect(itemName, windowX+100, windowY+150, 250, windowHeight-250,, filterHeight(11))
-		words := searchResult["Words"]
-		if searchResult.Has("Word") {
-			itemRect := searchResult["Word"].BoundingRect
-			if Abs(words[words.Length].BoundingRect.Y - itemRect.Y) <= itemRect.H {
-				SendInput "{WheelDown 3}"
+		scrollIntensity := intensity
+
+		; get items
+		searchResult := RapidOcr.FromRect(windowX+xAdd, windowY+150, xWidth, windowHeight-150)
+		if !searchResult { ; no reading?
+			continue
+		}
+		lines := filterText(searchResult.Lines)
+
+		prevFirstLine := itemLines and itemLines.Has(1) ? itemLines[1] : ''
+		(itemLines := Map()).CaseSense := 0
+		foundIdx := 0
+
+		; ensure all lines are items.
+		firstItemIdx ? prevSearch(lines) : bruteForce(lines)
+
+		hasItems := itemLines.Has(1)
+		firstItemIdx := hasItems ? itemLines[1].itemidx : 0
+		if itemLines.Has(itemName) {
+			if itemLines["last"].item = itemName {
+				SendEvent "{Click " windowX+30 " " windowY+offsetY+200 " 0}"
+				SendInput "{WheelDown " intensity "}"
 				Sleep 550
-				remainingItems := []
-				if !clearViewCheck { ; Check if at the end of the inventory, if so item is fully visible, ignore continue.
-					clearViewCheck := true
+				continue
+			}
+			itemLines[itemName].searchLines := searchResult.Lines
+			itemLines[itemName].lines := lines
+			if getRemaining {
+				getRemainingItems(itemLines[itemName])
+			}
+			return itemLines[itemName]
+		} else if itemIdx and firstItemIdx {
+			if firstItemIdx < itemIdx and lastItemIdx > itemIdx {
+				if !doubleCheck {
+					doubleCheck := true
 					continue
 				}
+				return false
 			}
-			break ; Item found and is fully visible, break the loop
+			scrollDir := firstItemIdx > itemIdx ? "Up" : "Down"
+			scrollIntensity := Max(Abs(itemIdx - firstItemIdx) // 10, intensity)
 		}
-		
-		if itemIdx and remainingItems.Length = 0 {
-			remainingItems := itemArray.Clone()
-			remainingItems.RemoveAt(itemIdx)
-			
-			if lastItemIdx { ; Start from last searched item.
-				if lastItemIdx > itemIdx {
-					remainingItems.Length := itemIdx - 1
-				} else {
-					remainingItems.RemoveAt(1, lastItemIdx-1)
-				}
-			}
-		}
-		
-		if itemIdx {
-			(wrapped := Map("Words", words)).Words := words
-			found := false
-			for i, item in remainingItems {
-				if findTextInRect(item, wrapped).Has("Word") {
-					idx := items[item][1]
-					scrollDir := idx > itemIdx ? "Up" : "Down"
-					scrollIntensity := Max(Abs(itemIdx - idx) // 10, 3)
-					found := true
-					if idx > itemIdx {
-						remainingItems.Length := i - 1
-					} else {
-						remainingItems.RemoveAt(1, i)
-					}
-					break
-				}
-			}
-			if !found {
-				remainingItems := []
-			}
-		}
-		
+
 		SendEvent "{Click " windowX+30 " " windowY+offsetY+200 " 0}"
 		SendInput "{Wheel" scrollDir " " scrollIntensity "}"
 		Sleep 550 ; wait for scroll to finish
-		if 10 > A_Index {
-			continue
-		}
-		
-		firstWord := searchResult["Words"][1]
-		
-		if firstWord.Text = firstItem and firstItem {
+
+		if !itemIdx and hasItems and prevFirstLine.Text = itemLines[1].Text {
 			if !doubleCheck {
 				doubleCheck := true
 				continue
-			} else if !itemIdx {
-				break ; at the end of inventory
 			}
-			; Somehow got lost in the inventory, change directions & reset known items.
-			scrollDir := scrollDir = 'Down' ? 'Up' : 'Down'
-			remainingItems := []
-			continue
+			break
 		}
-		
-		firstItem := firstWord.Text
+
 		doubleCheck := false
 	}
-	
-	if itemIdx {
-		lastItemIdx := itemIdx
+
+	bruteForce(curLines) {
+		for _, line in curLines {
+			if items.Has(line.Text) {
+				addLine(line, items[line.Text][2], items[line.Text][1])
+				continue
+			}
+			Loop itemArray.Length - lastItemIdx {
+				idx := lastItemIdx + A_Index
+				item := itemArray[idx]
+				if InStr(line.Text, StrLower(item)) {
+					addLine(line, item, idx)
+					break
+				}
+			}
+		}
 	}
-	
-	return itemRect ; Return rect of item for dragging
+	prevSearch(curLines) {
+		searchIdx := firstItemIdx - 3
+		for _, line in curLines {
+			Loop itemArray.Length - firstItemIdx + 3 {
+				idx := searchIdx + A_Index
+				if itemArray.Length < idx {
+					break
+				}
+				item := itemArray[idx]
+				if InStr(line.Text, StrLower(item)) {
+					addLine(line, item, idx)
+					break
+				}
+			}
+		}
+	}
+	addLine(line, item, idx) {
+		foundIdx += 1
+		line.items := itemLines
+		line.item := item
+		line.itemidx := idx
+		line.foundIdx := foundIdx
+		itemLines[item] := line
+		itemLines[foundIdx] := line
+		itemLines["last"] := line
+		lastItemIdx := idx
+	}
 }

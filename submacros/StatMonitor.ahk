@@ -57,45 +57,22 @@ buff_characters := Map()
 ; INITIALISE VARIABLES
 ; ▰▰▰▰▰▰▰▰▰▰▰▰
 
-; OCR TEST
-; check that classes needed for OCR function exist and can be created
-ocr_enabled := 1
-ocr_language := ""
-for k,v in Map("Windows.Globalization.Language","{9B0252AC-0C27-44F8-B792-9793FB66C63E}", "Windows.Graphics.Imaging.BitmapDecoder","{438CCB26-BCEF-4E95-BAD6-23A822E58D01}", "Windows.Media.Ocr.OcrEngine","{5BFFA85A-3384-3540-9940-699120D428A8}")
-{
-	CreateHString(k, &hString)
-	GUID := Buffer(16), DllCall("ole32\CLSIDFromString", "WStr", v, "Ptr", GUID)
-	result := DllCall("Combase.dll\RoGetActivationFactory", "Ptr", hString, "Ptr", GUID, "PtrP", &pClass:=0)
-	DeleteHString(hString)
-	if (result != 0) {
-		ocr_enabled := 0
-		break
-	}
-}
-if (ocr_enabled = 1) {
-	list := ShowAvailableLanguages()
-	for lang in ["ko","en-"] { ; priority list
-		Loop Parse list, "`n", "`r" {
-			if (InStr(A_LoopField, lang) = 1) {
-				ocr_language := A_LoopField
-				break 2
-			}
-		}
-	}
-	if (ocr_language = "") {
-		if ((ocr_language := SubStr(list, 1, InStr(list, "`n")-1)) = "") {
-			msgbox "No OCR supporting languages are installed on your system! Please follow the Knowledge Base guide to install a supported language as a secondary language on Windows.", "WARNING!!", 0x1030
-		}
-	}
-}
-
 
 ; HONEY MONITORING
 ; honey_values format: (A_Min):value
 honey_values := Map()
 
 ; obtain start honey
-start_honey := ocr_enabled ? DetectHoney() : 0
+start_honey := DetectHoney()
+if not start_honey { ; ensure ocr picks up something.
+	Loop 5 {
+		start_honey := DetectHoney()
+		if start_honey {
+			break
+		}
+		Sleep 20
+	}
+}
 
 ; honey_12h format: (minutes DIV 4):value
 honey_12h := Map()
@@ -185,8 +162,7 @@ if (statMonitorVersionArg != "")
 message := "Hourly Reports will start sending in **" DurationFromSeconds(60*(59-A_Min)+(60-A_Sec), "m'm 's's'") "**\n"
 	. "Version: **StatMonitor v" version "**\n"
 	. "Detected OS: **" os_version "**\n"
-	. (ocr_enabled ? "OCR Status: **Enabled (" ocr_language ")**\nCurrent Honey: **" (start_honey ? FormatNumber(start_honey) : "N/A") "**"
-		: "OCR Status: **Disabled**\n**Honey Graphs will be empty.**")
+	. "OCR Status: **Enabled (RapidOCR)**\nCurrent Honey: **" (start_honey ? FormatNumber(start_honey) : "N/A") "**"
 
 message .= (IsSet(natro_version) ? "\n\nMacro: **Natro v" natro_version "**\n"
 	. "Gather Fields: **" FieldName1 ", " FieldName2 ", " FieldName3 "**\n"
@@ -328,13 +304,6 @@ for k,v in graph_regions
 	Gdip_DrawLine(G, pPen, v[1]-60, v[2]+v[4]+10, v[1]+v[3]+60, v[2]+v[4]+10)
 }
 Gdip_DeleteBrush(pBrush), Gdip_DeletePen(pPen)
-if (ocr_enabled = 0)
-{
-	pBrush := Gdip_BrushCreateSolid(0x40cc0000)
-	for k,v in ["honey/sec","honey","honey12h"]
-		Gdip_FillRectangle(G, pBrush, graph_regions[v][1], graph_regions[v][2], graph_regions[v][3], graph_regions[v][4])
-	Gdip_DeleteBrush(pBrush)
-}
 
 ; draw static buff images
 for k,v in ["clock","blessing","bloat","tideblessing","mondo"]
@@ -511,7 +480,7 @@ Loop
 	DetectBuffs()
 
 	; detect honey every minute if ocr is enabled
-	if ((ocr_enabled = 1) && ((Mod(time_value, 10) = 0) || (last_honey && time > last_honey + 580000000)))
+	if (((Mod(time_value, 10) = 0) || (last_honey && time > last_honey + 580000000)))
 	{
 		DetectHoney()
 		DllCall("GetSystemTimeAsFileTime", "int64p", &time)
@@ -810,11 +779,11 @@ DetectBuffs()
 			buff_values[v][i] := 0
 	}
 
-BFBS_FieldBoostSimplePresent(pBMArea, key, &list := "") {
-	iconVariation := (key = "bamboofieldboost") ? 30 : 30
-	iconY2 := (key = "bamboofieldboost") ? 10 : 10
-	return (Gdip_ImageSearch(pBMArea, buff_bitmaps["pBM" key], &list, , iconVariation, , , iconY2, , 7) = 1)
-}
+	BFBS_FieldBoostSimplePresent(pBMArea, key, &list := "") {
+		iconVariation := (key = "bamboofieldboost") ? 30 : 30
+		iconY2 := (key = "bamboofieldboost") ? 10 : 10
+		return (Gdip_ImageSearch(pBMArea, buff_bitmaps["pBM" key], &list, , iconVariation, , , iconY2, , 7) = 1)
+	}
 
 	; colour boost x1-x10
 	x := windowWidth
@@ -961,9 +930,8 @@ BFBS_FieldBoostSimplePresent(pBMArea, key, &list := "") {
 * @note function is a WIP, and OCR readings are not 100% reliable!
 * @author SP
 ********************************************************************/
-DetectHoney()
-{
-	global honey_values, start_honey, start_time, ocr_language
+DetectHoney() {
+	global honey_values, start_honey, start_time
 
 	; check roblox window exists
 	hwnd := GetRobloxHWND()
@@ -982,7 +950,7 @@ DetectHoney()
 		Loop 2 {
 			pBMNew := Gdip_ResizeBitmap(pBM, ((A_Index = 1) ? (250 + i * 20) : (750 - i * 20)), 36 + i * 4, 2)
 			Gdip_BitmapApplyEffect(pBMNew, pEffect)
-			text := MultiStrReplace(OCR.FromBitmap(pBMNew).Text, Map("o", "0", "i", "1", "l", "1", "a", "4"))
+			text := MultiStrReplace(RapidOcr.FromBitmap(pBMNew,,,false), Map("o", "0", "i", "1", "l", "1", "a", "4"))
 			Gdip_DisposeImage(pBMNew)
 			try detected[v := ((StrLen((n := RegExReplace(text, "\D"))) > 0) ? n : 0)] := detected.Has(v) ? [detected[v][1]+1, detected[v][2] " " i . A_Index] : [1, i . A_Index]
 		}
@@ -1022,7 +990,7 @@ DetectHoney()
 ********************************************************************************************************/
 SendHourlyReport(previewOutputPath := "")
 {
-	global pBM, regions, stat_regions, honey_values, honey_12h, backpack_values, buff_values, buff_colors, blue_field_debounce, status_changes, start_time, start_honey, stats, latest_boost, latest_winds, graph_regions, version, natro_version, os_version, bitmaps, ocr_enabled, ocr_language
+	global pBM, regions, stat_regions, honey_values, honey_12h, backpack_values, buff_values, buff_colors, blue_field_debounce, status_changes, start_time, start_honey, stats, latest_boost, latest_winds, graph_regions, version, natro_version, os_version, bitmaps
 	static honey_average := 0, honey_earned := 0, convert_time := 0, gather_time := 0, other_time := 0, stats_old := [["Total Boss Kills",0],["Total Vic Kills",0],["Total Bug Kills",0],["Total Planters",0],["Quests Done",0],["Disconnects",0],["Pine Tree",0],["Blue Flower",0],["Bamboo",0]]
 	theme := StatMonitorTheme_Load()
 
@@ -1731,13 +1699,13 @@ SendHourlyReport(previewOutputPath := "")
 
 		; row 3: OCR status
 		y := stat_regions["info"][2]+220
-		pos := Gdip_TextToGraphics(G, "OCR: " (ocr_enabled ? ("Enabled (" ocr_language ")") : ("Disabled")), "s56 Center Bold c00ffffff x" stat_regions["info"][1]+stat_regions["info"][3]//2 " y" y, "Segoe UI")
+		pos := Gdip_TextToGraphics(G, "OCR: Enabled (RapidOcr)", "s56 Center Bold c00ffffff x" stat_regions["info"][1]+stat_regions["info"][3]//2 " y" y, "Segoe UI")
 		x := SubStr(pos, 1, InStr(pos, "|", , , 1)-1)
 
 		pos := Gdip_TextToGraphics(G, "OCR: ", "s56 Left Bold c" smTextMuted " x" x " y" y, "Segoe UI")
 		x := SubStr(pos, 1, InStr(pos, "|", , , 1)-1)+SubStr(pos, InStr(pos, "|", , , 2)+1, InStr(pos, "|", , , 3)-InStr(pos, "|", , , 2)-1)
 
-		Gdip_TextToGraphics(G, (ocr_enabled ? ("Enabled (" ocr_language ")") : ("Disabled")), "s56 Left Bold c" (ocr_enabled ? smTextPositive : smTextNegative) " x" x " y" y, "Segoe UI")
+		Gdip_TextToGraphics(G, "Enabled (RapidOcr)", "s56 Left Bold cff4fdf26 x" x " y" y, "Segoe UI")
 
 		; row 4: windows version
 		y := stat_regions["info"][2]+300
@@ -2093,68 +2061,6 @@ maxX(List)
 		if (IsNumber(element) && (element > X))
 			X := element
 	return X
-}
-
-CLSIDFromString(IID, &CLSID?) {
-	CLSID := Buffer(16)
-	if res := DllCall("ole32\CLSIDFromString", "WStr", IID, "Ptr", CLSID, "UInt")
-	throw Error("CLSIDFromString failed. Error: " . Format("{:#x}", res))
-	Return CLSID
-}
-
-ShowAvailableLanguages() {
-	static OcrEngineStatics, LanguageFactory, CurrentLanguage:="", BitmapDecoderStatics, GlobalizationPreferencesStatics
-	if !IsSet(OcrEngineStatics) {
-		CreateClass("Windows.Globalization.Language", ILanguageFactory := "{9B0252AC-0C27-44F8-B792-9793FB66C63E}", &LanguageFactory)
-		CreateClass("Windows.Graphics.Imaging.BitmapDecoder", IBitmapDecoderStatics := "{438CCB26-BCEF-4E95-BAD6-23A822E58D01}", &BitmapDecoderStatics)
-		CreateClass("Windows.Media.Ocr.OcrEngine", IOcrEngineStatics := "{5BFFA85A-3384-3540-9940-699120D428A8}", &OcrEngineStatics)
-		ComCall(6, OcrEngineStatics, "uint*", &MaxDimension:=0)
-	}
-	if !IsSet(GlobalizationPreferencesStatics)
-		CreateClass("Windows.System.UserProfile.GlobalizationPreferences", IGlobalizationPreferencesStatics := "{01BF4326-ED37-4E96-B0E9-C1340D1EA158}", &GlobalizationPreferencesStatics)
-	ComCall(9, GlobalizationPreferencesStatics, "ptr*", &LanguageList:=0)   ; get_Languages
-	ComCall(7, LanguageList, "int*", &count:=0)   ; count
-	text := ""
-	loop count {
-		ComCall(6, LanguageList, "int", A_Index-1, "ptr*", &hString:=0)   ; get_Item
-		ComCall(6, LanguageFactory, "ptr", hString, "ptr*", &LanguageTest:=0)   ; CreateLanguage
-		ComCall(8, OcrEngineStatics, "ptr", LanguageTest, "int*", &bool:=0)   ; IsLanguageSupported
-		if (bool = 1) {
-			ComCall(6, LanguageTest, "ptr*", &hText:=0)
-			b := DllCall("Combase.dll\WindowsGetStringRawBuffer", "ptr", hText, "uint*", &length:=0, "ptr")
-			text .= StrGet(b, "UTF-16") "`n"
-		}
-		ObjRelease(LanguageTest)
-	}
-	ObjRelease(LanguageList)
-	return text
-}
-
-CreateClass(str, interface, &Class)
-{
-	CreateHString(str, &hString)
-	GUID := CLSIDFromString(interface)
-	result := DllCall("Combase.dll\RoGetActivationFactory", "ptr", hString, "ptr", GUID, "ptr*", &Class:=0)
-	if (result != 0)
-	{
-		if (result = 0x80004002)
-			msgbox "No such interface supported"
-		else if (result = 0x80040154)
-			msgbox "Class not registered"
-		else
-			msgbox "error: " result
-	}
-	DeleteHString(hString)
-}
-
-CreateHString(str, &hString)
-{
-	DllCall("Combase.dll\WindowsCreateString", "wstr", str, "uint", StrLen(str), "ptr*", &hString:=0)
-}
-
-DeleteHString(hString)
-{
-	DllCall("Combase.dll\WindowsDeleteString", "ptr", hString)
 }
 
 Send_WM_COPYDATA(StringToSend, TargetScriptTitle, wParam:=0)

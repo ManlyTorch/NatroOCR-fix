@@ -89,8 +89,8 @@ Loop {
         Loop 20 {
             Sleep 100
             searchResult := findTextInRect("feed:", windowX+windowWidth//2 - 200, windowY+windowHeight//2 - 100, 400, 250, 2)
-            if searchResult.Has("Word") {
-                rect := searchResult["Word"]
+            if searchResult.Has("Line") {
+                rect := searchResult["Line"]
                 break
             }
         }

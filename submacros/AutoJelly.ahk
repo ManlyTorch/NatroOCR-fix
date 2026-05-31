@@ -14,7 +14,7 @@
 #Include Gdip_All.ahk
 #include Roblox.ahk
 #include Gdip_ImageSearch.ahk
-#include OCR.ahk
+#include RapidOcr.ahk
 ;==================================
 SendMode("Event")
 CoordMode('Pixel', 'Screen')
@@ -405,7 +405,7 @@ blc_start() {
         pEffect := Gdip_CreateEffect(5, -60,30)
         Gdip_BitmapApplyEffect(pBitmap, pEffect)
         Gdip_DisposeEffect(pEffect)
-        text:= RegExReplace(OCR.FromBitmap(pBitmap).Text, "i)([\r\n\s]|mutation)*")
+        text:= RegExReplace(RapidOcr.FromBitmap(pBitmap,,,false), "i)([\r\n\s]|mutation)*")
         Gdip_DisposeImage(pBitmap)
         found := 0
         for i, j in selectedMutations

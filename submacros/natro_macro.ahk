@@ -2194,7 +2194,6 @@ hBitmapsSBT := Map(), hBitmapsSBT.CaseSense := 0
 #Include "collect\bitmaps.ahk"
 #Include "kill\bitmaps.ahk"
 #Include "boost\bitmaps.ahk"
-#Include "inventory\bitmaps.ahk"
 #Include "reconnect\bitmaps.ahk"
 #Include "fdc\bitmaps.ahk"
 #Include "offset\bitmaps.ahk"
@@ -11457,7 +11456,7 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		MouseMove windowX+350, windowY+offsetY+100
 		;check to make sure you are not in a yes/no prompt
 		GetRobloxClientPos(hwnd)
-		searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+		searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 		if searchResult.Has("Line") {
 			rect := searchResult["Line"].Rect
 			MouseMove rect.x, rect.y
@@ -11760,7 +11759,7 @@ nm_AmuletPrompt(decision:=0, type:=0, *){
 			MouseMove line.X+225, line.Y, 5
 			Click
 			Loop 25 {
-				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 				if searchResult.Has("Line") {
 					rect := searchResult["Line"].Rect
 					MouseMove rect.x, rect.y
@@ -13484,7 +13483,7 @@ nm_StickerPrinter(){
 				i := 0
 				loop 16 {
 					Sleep 250
-					searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+					searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 					if searchResult.Has("Line") {
 						line := searchResult["Line"]
 						MouseMove line.x, line.y
@@ -13572,7 +13571,7 @@ nm_StickerStack(resetBeforeTravel := 1){
 				}
 			}
 
-			if !stackTime {
+			if !stackTime and StickerStackMode == 0 {
 				nm_setStatus("Error", "Unable to detect Stack Boost time!")
 			}
 
@@ -13614,7 +13613,7 @@ nm_StickerStack(resetBeforeTravel := 1){
 			i := 0
 			loop 16 {
 				Sleep 250
-				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 				if searchResult.Has("Word") {
 					rect := searchResult["Word"].BoundingRect
 					MouseMove rect.x, rect.y
@@ -21801,14 +21800,14 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0, ba:=1) {
 		MouseClickDrag "Left", windowX+30, yPos, windowX+windowWidth//2, windowY+windowHeight//2, 5
 		Sleep 200
 		
-		if findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150).Has("Line") {
+		if findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200).Has("Line") {
 			break ; yes detected.
 		}
 	}
 	Loop 50 {
 		GetRobloxClientPos(hwnd)
 		loop 3 {
-			searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+			searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 			if searchResult.Has("Line") {
 				line := searchResult["Line"]
 				MouseMove line.x, line.y
@@ -21933,7 +21932,7 @@ ba_harvestPlanter(planterNum){
 		GetRobloxClientPos(hwnd)
 		if ((HarvestFullGrown = 1) && !PlanterHarvestNow%planterNum%) {
 			loop 3 {
-				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 				if searchResult.Has("Line") {
 					line := searchResult["Line"]
 					MouseMove line.x, line.y
@@ -21947,7 +21946,7 @@ ba_harvestPlanter(planterNum){
 			}
 		} else {
 			loop 3 {
-				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 				if searchResult.Has("Line") {
 					line := searchResult["Line"]
 					MouseMove line.x, line.y
@@ -22436,7 +22435,7 @@ mp_HarvestPlanter(PlanterIndex) {
 		GetRobloxClientPos(hwnd)
 		if ((PlanterHarvestFull%PlanterIndex% == "Full") && !PlanterHarvestNow%PlanterIndex%) {
 			loop 3 {
-				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				searchResult := findTextInRect("no", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 				if searchResult.Has("Line") {
 					line := searchResult["Line"]
 					MouseMove line.x, line.y
@@ -22453,7 +22452,7 @@ mp_HarvestPlanter(PlanterIndex) {
 			}
 		} else {
 			loop 3 {
-				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 150)
+				searchResult := findTextInRect("yes", windowX+windowWidth//2-250, windowY+windowHeight//2-52, 500, 200)
 				if searchResult.Has("Line") {
 					line := searchResult["Line"]
 					MouseMove line.x, line.y

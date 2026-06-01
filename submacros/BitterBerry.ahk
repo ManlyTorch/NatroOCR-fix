@@ -7,6 +7,7 @@
 #Include "Roblox.ahk"
 #Include "nm_OpenMenu.ahk"
 #Include "nm_InventorySearch.ahk"
+#Include RapidOCR.ahk
 
 CoordMode "Mouse", "Screen"
 OnExit(ExitFunc)

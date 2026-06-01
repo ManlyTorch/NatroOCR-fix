@@ -105,6 +105,8 @@ if !WinExist("Heartbeat.ahk ahk_class AutoHotkey")
 	run '"' exe_path32 '" /script "' A_WorkingDir '\submacros\Heartbeat.ahk"'
 DetectHiddenWindows 0
 
+#Include RapidOCR.ahk
+
 ; OnMessages
 OnMessage(0x004A, nm_WM_COPYDATA)
 OnMessage(0x5550, nm_ForceLabel, 255)

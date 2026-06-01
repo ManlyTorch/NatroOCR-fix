@@ -18,6 +18,7 @@ You should have received a copy of the license along with Natro Macro. If not, p
 #Include "Gdip_All.ahk"
 #Include "Gdip_ImageSearch.ahk"
 #Include "Roblox.ahk"
+#Include "RapidOCR.ahk"
 #Include "DurationFromSeconds.ahk"
 #Include "nowUnix.ahk"
 

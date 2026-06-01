@@ -11587,9 +11587,9 @@ nm_HealthBar() {
 nm_ConfirmAtHive(){
 	ActivateRoblox()
 	GetRobloxClientPos()
-	x := windowX+windowWidth//2-250, y := windowY+offsetY+windowHeight//17
+	x := windowX+windowWidth//2-250, y := windowY+offsetY
 	Loop 6 {
-		if findTextInRect("make", x, y, 500, 125, (A_Index - 1) // 2 + 1).Has("Line") {
+		if findTextInRect("make", x, y, 500, 300, (A_Index - 1) // 2 + 1).Has("Line") {
 			return true
 		}
 	}
@@ -18853,9 +18853,9 @@ ShellRun(prms*)
 }
 nm_onUnclaimedHiveSlot() {
 	offsetY := GetYOffset()
-	x := windowX+windowWidth//2-250, y := windowY+offsetY+windowHeight//17
+	x := windowX+windowWidth//2-250, y := windowY+offsetY
 	Loop 6 {
-		if findTextInRect("claim", x, y, 500, 125, (A_Index - 1) // 2 + 1).Has("Line") {
+		if findTextInRect("claim", x, y, 500, 300, (A_Index - 1) // 2 + 1).Has("Line") {
 			return true
 		}
 	}

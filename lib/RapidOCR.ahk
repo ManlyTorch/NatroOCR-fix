@@ -140,7 +140,7 @@ class RapidOcr {
 		} catch as e {
 			if e.Message = 'Unhandled exception.' {
 				retVal := true
-				res := {Lines:[]}
+				res := {Lines:Array()}
 			} else {
 				throw Error(e, -1)
 			}

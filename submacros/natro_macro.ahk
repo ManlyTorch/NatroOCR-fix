@@ -13553,14 +13553,14 @@ nm_StickerStack(resetBeforeTravel := 1){
 			; detect stack boost time
 			stackTime := 0
 			Loop 20 {
-				ocrResult := RapidOcr.FromRect(windowX+windowWidth//2-275, windowY+4*windowHeight//10, 550, 220, 2)
+				ocrResult := RapidOcr.FromRect(windowX+windowWidth//2, windowY+windowHeight//2, 300, 220, A_Index // 10 + 1)
 				if !ocrResult {
 					Sleep 100
 					continue
 				}
 				for idx, line in ocrResult.Lines {
-					txt := StrLower(line.Text)
-					if RegExMatch(txt, "stackboost\(x(\d+)", &match) {
+					txt := StrLower(StrReplace(line.Text, " "))
+					if RegExMatch(txt, "stackbo.*\(x(\d+)", &match) {
 						if match.Count {
 							stackTime := 900 + 10 * Integer(match[1])
 							nm_setStatus("Detected", "Stack Boost Time: " hmsFromSeconds(stackTime))

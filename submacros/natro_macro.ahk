@@ -16297,7 +16297,7 @@ nm_convert(){
 		nm_setStatus("Converting", "Backpack")
 		while (((BackpackConvertTime := nowUnix()-ConvertStartTime)<300) && (BackpackPercentFiltered>0)) { ;5 mins
 			Sleep 1000
-			nm_AutoFieldBoost(currentField)
+			; nm_AutoFieldBoost(currentField)
 			; if(AFBuseGlitter || AFBuseBooster) {
 			; 	nm_setStatus("Interrupted", "AFB")
 			; 	return
@@ -18138,7 +18138,7 @@ nm_UpdateQuest(questGiver, giverAffix) {
 			nm_Collect()
 		if giverAffix = "Bee" and Quest%boostType%Boost
 			nm_ToAnyBooster()
-		for bug in QuestBugs[questGiver] {
+		for bug in QuestBugs.Has(questGiver) ? QuestBugs[questGiver] : [] {
 			local bugCD := floor(BugCooldowns[bug]*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01))
 			if bug != "All" and %questGiver . bug% and nowUnix()-LastBugrun%bug% < bugCD {
 				nm_Bugrun()

@@ -20119,7 +20119,7 @@ nm_UpdateQuestProg(questGiver, giverAffix, useCached:=false) {
 }
 nm_UpdateQuest(questGiver, giverAffix) {
 	global
-	if !%questGiver%QuestCheck
+	if !%questGiver%QuestCheck or (QuestCooldowns.Has(questGiver) and (nowUnix()-Last%questGiver%Quest)<=QuestCooldowns[questGiver])
 		return
 	
 	local bugQuestName := questGiver = "Polar" ? "Quest" : questGiver

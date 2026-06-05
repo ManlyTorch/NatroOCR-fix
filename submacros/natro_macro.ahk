@@ -20133,7 +20133,7 @@ nm_UpdateQuest(questGiver, giverAffix) {
 			nm_Collect()
 		if giverAffix = "Bee" and Quest%boostType%Boost
 			nm_ToAnyBooster()
-		for bug in QuestBugs[questGiver] {
+		for bug in QuestBugs.Has(questGiver) ? QuestBugs[questGiver] : [] {
 			local bugCD := floor(BugCooldowns[bug]*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01))
 			if bug != "All" and %questGiver . bug% and nowUnix()-LastBugrun%bug% < bugCD {
 				nm_Bugrun()
@@ -21478,7 +21478,7 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0, ba:=1) {
 		if nm_AcceptPrompt() {
 			break ; yes detected.
 		}
-		
+
 		if (A_Index = 10) {
 			nm_setStatus("Missing", planterName)
 			if ba {

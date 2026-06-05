@@ -18,11 +18,9 @@ RunBitmapOCR(*) {
     x			:= NumGet(pMem + 40, 0,  "int")
     y			:= NumGet(pMem + 40, 4,  "int")
     scale		:= NumGet(pMem + 40, 8,  "int")
-    allresult	:= NumGet(pMem + 40, 12, "int")
+    param       := NumGet(pMem + 40, 12, "int")
     NumPut("ptr", pMem + 56, data, 0)
-    res := ''
-    retVal := DllCall('RapidOcrOnnx\OcrDetectBitmapData', 'ptr', RapidOcr.Engine, 'ptr', data, 'ptr', 0, 'ptr', RapidOcr.__cb(2 - !allresult, x, y, scale), 'ptr', ObjPtr(&res), 'cdecl')
-    jsonStr := retVal ? (allresult ? JSON.stringify(res) : res) : ''
+    jsonStr := JSON.stringify(RapidOcr.FromBitmapData(data, scale, param, x, y))
     buf := Buffer(StrPut(jsonStr, "UTF-8"))
     StrPut(jsonStr, buf, "UTF-8")
     lenBuf := Buffer(4, 0)
@@ -34,9 +32,9 @@ RunBitmapOCR(*) {
 
 OnExit(close)
 close(*) {
+    Gdip_Shutdown(pToken)
     DllCall("UnmapViewOfFile", "ptr", pMem)
     DllCall("UnmapViewOfFile", "ptr", pMemResult)
     DllCall("CloseHandle", "ptr", hMap)
     DllCall("CloseHandle", "ptr", hMapResult)
-    Gdip_Shutdown(pToken)
 }

@@ -137,7 +137,7 @@ Loop {
 	rarityText := ''
 	Loop 8 {
 		ocrResult := RapidOcr.FromRect(windowX+windowWidth//2-155, windowY+windowHeight//2 - 300, 310, 600)
-		if !ocrResult {
+		if !ocrResult.Text {
 			continue
 		}
 		lines := ocrResult.Lines

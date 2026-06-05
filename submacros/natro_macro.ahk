@@ -12458,7 +12458,7 @@ nm_Ant() { ;collect Ant Pass then do Challenge
 				++AntPassNum
 				break
 			} else {
-				ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-200, windowY+offsetY, 400, 125,,, false))
+				ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-250, windowY+offsetY, 500, windowHeight//5).Text)
 				if InStr(ocrResult, 'you') {
 					(AntPassNum < 10) && nm_setStatus("Confirmed", "10/10 Ant Passes")
 					AntPassNum:=10
@@ -12514,7 +12514,7 @@ nm_Ant() { ;collect Ant Pass then do Challenge
 					}
 					click "up"
 				} else {
-					ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-200, windowY+offsetY, 400, 125,,, false))
+					ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-250, windowY+offsetY, 500, windowHeight//5).Text)
 					if InStr(ocrResult, "use").Has("Line") {
 						Gdip_DisposeImage(pBMScreen)
 						AntPassNum:=0
@@ -12594,7 +12594,7 @@ nm_RoboPass(){
 				++RoboPassNum
 				break
 			} else {
-				ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-200, windowY+offsetY, 400, 125,,, false))
+				ocrResult := StrLower(RapidOCR.FromRect(windowX+windowWidth//2-250, windowY+offsetY, 500, windowHeight//5).Text)
 				if InStr(ocrResult, "you") {
 					(RoboPassNum < 10) && nm_setStatus("Confirmed", "10/10 Robo Passes")
 					RoboPassNum:=10
@@ -17718,7 +17718,7 @@ nm_GoGather(){
 						nm_setShiftLock(1)
 					}
 					;interrupt if
-					if (thisfield!=QuestGatherField || %RotateQuest%QuestComplete){ ;change fields or this field is complete
+					if thisfield!=QuestGatherField{ ;change fields or this field is complete
 						interruptReason := "Next Quest Step"
 						break
 					}

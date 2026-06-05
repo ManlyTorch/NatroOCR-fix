@@ -17541,7 +17541,7 @@ nm_GoGather(){
 		if ((RotateQuest = "Polar") || (RotateQuest = "Black"))
 			ConvertGatherFlag := 0
 		if (IsSet(RotateQuest) && (%RotateQuest%QuestCheck = 1))
-			nm_UpdateQuestProg(RotateQuest, RotateAffix)
+			nm_UpdateQuestProg(RotateQuest, RotateAffix, true)
 		nm_setStatus("Gathering", RotateQuest . " " . fieldOverrideReason . " - " . FieldName "`nLimit " field_limit " - " FieldPattern " - " FieldPatternSize " - " FieldSprinklerLoc " " FieldSprinklerDist)
 	} else {
 		nm_setStatus("Gathering", fieldOverrideReason . " - " . FieldName "`nLimit " field_limit " - " FieldPattern " - " FieldPatternSize " - " FieldSprinklerLoc " " FieldSprinklerDist)
@@ -17712,7 +17712,7 @@ nm_GoGather(){
 			if (Mod(A_Index, 100) = 1) { ; every 5s
 				;quest interrupts
 				if ((fieldOverrideReason="Quest") && IsSet(RotateQuest) && (%RotateQuest%QuestCheck = 1)) {
-					nm_UpdateQuestProg(RotateQuest, RotateAffix)
+					nm_UpdateQuestProg(RotateQuest, RotateAffix, true)
 					if(FieldPatternShift) {
 						nm_setShiftLock(1)
 					}
@@ -19908,8 +19908,6 @@ nm_GetQuestCorner(pos) {
 }
 nm_GetQuestPos(questGiver) {
 	global
-	nm_setShiftLock(0)
-	nm_OpenMenu("questlog")
 	hwnd := GetRobloxHWND()
 	GetRobloxClientPos(hwnd)
 	offsetY := GetYOffset(hwnd)
@@ -19991,8 +19989,9 @@ nm_GetActiveQuest(questGiver, giverAffix, line:='') {
 	return givenQuest
 	static filterQuestName(questName) => StrLower(MultiStrReplace(questName, ":", "", ";", "", "-", "", " ", ""))
 }
-nm_UpdateQuestProg(questGiver, giverAffix) {
+nm_UpdateQuestProg(questGiver, giverAffix, useCached:=false) {
 	global
+	static questPos := '', givenQuest := ''
 	QuestGatherField := "None"
 	QuestGatherFieldSlot := 0
 	%questGiver%QuestComplete := 1
@@ -20009,11 +20008,13 @@ nm_UpdateQuestProg(questGiver, giverAffix) {
 		%bugQuestName . bug% := 0
 	}
 
-	if !(questPos := nm_GetQuestPos(questGiver))
+	nm_setShiftLock(0)
+	nm_OpenMenu("questlog")
+	if !useCached and !(questPos := nm_GetQuestPos(questGiver))
 		return
 	local line := questPos[1], startCorner := questPos[2]
 
-	if !(givenQuest := nm_GetActiveQuest(questGiver, giverAffix, line))
+	if !useCached and !(givenQuest := nm_GetActiveQuest(questGiver, giverAffix, line))
 		return
 
 	local questProg := Array()

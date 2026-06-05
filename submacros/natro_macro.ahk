@@ -19915,7 +19915,7 @@ nm_GetQuestPos(questGiver) {
 	local line := '', startCorner := ''
 	local pBMLog := Gdip_BitmapFromScreen(windowX+30 "|" windowY+offsetY+180 "|30|400")
 	Loop 50 {
-		Loop (A_Index = 1 ? 5 : 2) {
+		Loop (A_Index < 1 ? 5 : 2) {
 			local searchResult := findTextInRect(questGiver, windowX, windowY+150, 350, windowHeight-150, 2, filterQuests)
 			if searchResult.Has('Line') {
 				line := searchResult['Line']

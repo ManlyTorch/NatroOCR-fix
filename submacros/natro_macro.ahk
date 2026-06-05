@@ -10470,7 +10470,7 @@ nm_HealthBar() {
 nm_ConfirmAtHive(maxAttempts:=6){
 	ActivateRoblox()
 	GetRobloxClientPos()
-	x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//3
+	x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//5
 	Loop maxAttempts {
 		foundText := StrLower(RapidOcr.FromRect(x, y, 500, h, (A_Index - 1) // 2 + 1).Text)
 		if InStr(foundText, "make") {
@@ -10756,8 +10756,9 @@ nm_gotoCannon() {
 		KeyWait "F14", "D T5 L"
 		DllCall("GetSystemTimeAsFileTime","int64p",&s:=0)
 		n := s, f := s+200000000
+		x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//5
 		while (n < f) {
-			if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
+			if findTextInRect("cannon", x, y, 500, h).Has("Line") {
 				success := 1
 				break
 			}
@@ -10773,7 +10774,7 @@ nm_gotoCannon() {
 					break
 				}
 				Sleep 500
-				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
+				if findTextInRect("cannon", x, y, 500, h).Has("Line") {
 					break 2
 				} else {
 					movement := nm_Walk(1.5, LeftKey)
@@ -17071,7 +17072,7 @@ ShellRun(prms*)
 }
 nm_onUnclaimedHiveSlot() {
 	offsetY := GetYOffset()
-	x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//3
+	x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//5
 	Loop 6 {
 		if findTextInRect("claim", x, y, 500, h, (A_Index - 1) // 2 + 1).Has("Line") {
 			return true
@@ -18448,8 +18449,9 @@ nm_PathVars(){
 
 			DllCall("GetSystemTimeAsFileTime","int64p",&s:=0)
 			n := s, f := s+100000000
+			x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//5
 			while (n < f) {
-				if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
+				if findTextInRect("cannon", x, y, 500, h).Has("Line") {
 					success := 1
 					break
 				}
@@ -18465,7 +18467,7 @@ nm_PathVars(){
 						break
 					}
 					Sleep 500
-					if findTextInRect("cannon", windowX+windowWidth//2-200, windowY+offsetY, 400, 125).Has("Line") {
+					if findTextInRect("cannon", x, y, 500, h).Has("Line") {
 						break 2
 					} else {
 						nm_Walk(1.5, LeftKey)

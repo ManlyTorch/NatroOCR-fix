@@ -701,7 +701,7 @@ nm_status(status)
 			color := colors[colorIndex := Mod(colorIndex, 7) + 1]
 		else
 		{
-			color := ((state = "Disconnected") || (state = "You Died") || (state = "Failed") || (state = "Error") || (state = "Aborting") || (state = "Missing") || (state = "Canceling") || InStr(objective, "Phantom") || InStr(objective, "No Balloon Convert")) ? 15085139 ; red - error
+			color := ((state = "Disconnected") || (state = "You Died") || (state = "Failed") || (state = "OCRError") || (state = "Error") || (state = "Aborting") || (state = "Missing") || (state = "Canceling") || InStr(objective, "Phantom") || InStr(objective, "No Balloon Convert")) ? 15085139 ; red - error
 			: (InStr(objective, "Tunnel Bear") || InStr(objective, "King Beetle") || InStr(objective, "Vicious Bee") || InStr(objective, "Snail") || InStr(objective, "Crab") || InStr(objective, "Mondo") || InStr(objective, "Commando")) ? 7036559 ; purple - boss / attacking
 			: (InStr(objective, "Planter") || (state = "Placing") || (state = "Collecting") || (state = "Holding")) ? 48355 ; blue - planters
 			: ((state = "Interrupted") || (state = "Reporting") || (state = "Warning")) ? 14408468 ; yellow - alert
@@ -1444,7 +1444,7 @@ nm_command(command)
 		if WinExist("natro_macro ahk_class AutoHotkey")
 		{
 			try
-				result := SendMessage(0x5558, 2, , , , , , , 2000)
+				result := SendMessage(0x5558, 2, , , , , , , 20000)
 			catch
 				result := -1
 			switch result

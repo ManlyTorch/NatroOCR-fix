@@ -32,11 +32,10 @@ findTextInRect(str, x, y?, w?, h?, scale:=1, filterLines:=filterSpaces, customCh
 	ocrResult := Map()
     if !IsSet(y) or not (y is Integer) {
         ocrResult := x
-        if x is Integer {
+        if x is Integer
             ocrResult := RapidOcr.FromBitmap(x, scale)
-        } else if x is String {
+        else if x is String
             ocrResult := RapidOcr.FromFile(x)
-        }
         if IsSet(y)
             filterLines := y
         if IsSet(w)
@@ -45,7 +44,7 @@ findTextInRect(str, x, y?, w?, h?, scale:=1, filterLines:=filterSpaces, customCh
 		ocrResult := RapidOcr.FromRect(x, y, w, h, scale)
 
 	if ocrResult is String
-		return Map("Lines", [], "OCRResult", ocrResult)
+		return Map("Lines", Array(), "OCRResult", ocrResult)
 
 	unspacedStr := str is String ? StrLower(StrReplace(str, " ")) : ''
     lines := filterLines(ocrResult.Lines)
@@ -68,6 +67,14 @@ findTextInRect(str, x, y?, w?, h?, scale:=1, filterLines:=filterSpaces, customCh
 	}
 	
     return searchResult
+}
+
+sendOCRErrorStatus(err){
+	FileAppend(err '`n', A_LineFile "\..\..\settings\ocr_error_log.txt")
+	prevDHW := DetectHiddenWindows(1)
+	if WinExist("Status.ahk ahk_class AutoHotkey")
+		try PostMessage 0xC2, 0, StrPtr("] OCRError: " err)
+	DetectHiddenWindows prevDHW
 }
 
 is64Bit := A_PtrSize >= 8
@@ -96,19 +103,19 @@ class RapidOcr {
 			this.throw()
 		else throw MemoryError()
 	}
-	__Delete() =>  is64Bit ? this.ptr && DllCall('RapidOcrOnnx\OcrDestroy', 'ptr', this, 'cdecl') : ''
+	__Delete() => is64Bit ? this.ptr && DllCall('RapidOcrOnnx\OcrDestroy', 'ptr', this, 'cdecl') : ''
 	throw() {
 		if err := DllCall('RapidOcrOnnx\OcrGetLastError', 'ptr', this, 'cdecl astr')
 			throw Error(err, -2)
 	}
+	debugError() {
+		if err := DllCall('RapidOcrOnnx\OcrGetLastError', 'ptr', this, 'cdecl astr')
+			sendOCRErrorStatus(err)
+		return {Lines:Array(),Text:''}
+	}
 
-	static __cb(i, x:=0, y:=0, scale:=1) {
-		cbs := [
-			{ ptr: CallbackCreate(get_text), __Delete: this => CallbackFree(this.ptr) },
-			{ ptr: CallbackCreate(get_result), __Delete: this => CallbackFree(this.ptr) },
-		]
-		return cbs[i]
-		get_text(userdata, ptext, presult) => %ObjFromPtrAddRef(userdata)% := StrGet(ptext, 'utf-8')
+	static __cb(x:=0, y:=0, scale:=1) {
+		return { ptr: CallbackCreate(get_result), __Delete: this => CallbackFree(this.ptr) }
 		get_result(userdata, ptext, presult) {
 			result := %ObjFromPtrAddRef(userdata)% := RapidOcr.OcrResult(presult, x, y, scale)
 			result.text := StrGet(ptext, 'utf-8')
@@ -117,44 +124,33 @@ class RapidOcr {
 	}
 
 	; opencv4.8.0 Mat
-	static FromMat(mat, scale:=1, param := 0, allresult := true, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectMat', 'ptr', this.Engine, 'ptr', mat, 'ptr', param, 'ptr', RapidOcr.__cb(2 - !allresult, x, y, scale), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.throw()
+	static FromMat(mat, scale:=1, param := 0, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectMat', 'ptr', this.Engine, 'ptr', mat, 'ptr', param, 'ptr', RapidOcr.__cb(x, y, scale), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.debugError()
 
 	; path of pic
-	static FromFile(picpath, scale:=1, param := 0, allresult := true, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectFile', 'ptr', this.Engine, 'astr', picpath, 'ptr', param, 'ptr', RapidOcr.__cb(2 - !allresult, x, y, scale), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.throw()
+	static FromFile(picpath, scale:=1, param := 0, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectFile', 'ptr', this.Engine, 'astr', picpath, 'ptr', param, 'ptr', RapidOcr.__cb(x, y, scale), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.debugError()
 
 	; Image binary data
-	static FromBinary(data, size, scale:=1, param := 0, allresult := false, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectBinary', 'ptr', this.Engine, 'ptr', data, 'uptr', size, 'ptr', param, 'ptr', RapidOcr.__cb(2 - !allresult, scale, x, y), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.throw()
+	static FromBinary(data, size, scale:=1, param := 0, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectBinary', 'ptr', this.Engine, 'ptr', data, 'uptr', size, 'ptr', param, 'ptr', RapidOcr.__cb(scale, x, y), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.debugError()
+
+	static FromBitmapData(data, scale:=1, param:=0, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectBitmapData', 'ptr', this.Engine, 'ptr', data, 'ptr', param, 'ptr', RapidOcr.__cb(x, y, scale), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.debugError()
 
 	; `struct BITMAP_DATA { void *bits; uint pitch; int width, height, bytespixel;};`
-	static FromBitmap64Bit(pBitmap, scale := 1, param := 0, allresult := true, x:=0, y:=0) {
-		if scale > 1 {
-			Gdip_GetImageDimensions(pBitmap, &tw, &th)
-			pBitmap := Gdip_ResizeBitmap(pBitmap, tw * scale, th * scale)
-		}
+	static FromBitmap64Bit(pBitmap, scale := 1, param := 0, x:=0, y:=0) {
+		if scale > 1
+			Gdip_GetImageDimensions(pBitmap, &tw, &th), pBitmap := Gdip_ResizeBitmap(pBitmap, tw * scale, th * scale)
 		Gdip_GetImageDimensions(pBitmap, &w, &h)
 		Gdip_LockBits(pBitmap, 0, 0, w, h, &stride, &scan0, &bitmapData, 1)
 		NumPut("ptr",  scan0, "uint", Abs(stride), "uint", w, "uint", h, "uint", 4, "uint", 0, "uint", 0, data := Buffer(40, 0))
-		res := ''
-		try {
-			retVal := DllCall('RapidOcrOnnx\OcrDetectBitmapData', 'ptr', this.Engine, 'ptr', data, 'ptr', param, 'ptr', RapidOcr.__cb(2 - !allresult, x, y, scale), 'ptr', ObjPtr(&res), 'cdecl')
-		} catch as e {
-			if e.Message = 'Unhandled exception.' {
-				retVal := true
-				res := allresult ? {Lines:Array()} : ''
-			} else {
-				throw Error(e, -1)
-			}
-		}
+		result := RapidOcr.FromBitmapData(data, scale, param, x, y)
 		Gdip_UnlockBits(pBitmap, &bitmapData)
-		if scale > 1 {
+		if scale > 1
 			Gdip_DisposeImage(pBitmap)
-		}
-		return retVal ? res : ''
+		return result
 	}
 
-	static FromRect(x, y, w, h, scale := 1, param := 0, allresult := true) {
+	static FromRect(x, y, w, h, scale := 1, param := 0) {
 		pBitmap := Gdip_BitmapFromScreen(x '|' y '|' w '|' h)
-		res := this.FromBitmap(pBitmap, scale, param, allresult, x, y)
+		res := this.FromBitmap(pBitmap, scale, param, x, y)
 		Gdip_DisposeImage(pBitmap)
 		return res
 	}
@@ -283,11 +279,9 @@ if !is64Bit and A_Is64bitOS and FileExist(A_LineFile "\..\..\submacros\AutoHotke
 	DetectHiddenWindows(prevDHW)
 	
 	; I'm too lazy to implement more of its functions, besides its like the only one going to be used so.
-	FromBitmap32Bit(this, pBitmap, scale := 1, param := 0, allresult := true, x:=0, y:=0) {
-		if scale > 1 {
-			Gdip_GetImageDimensions(pBitmap, &tw, &th)
-			pBitmap := Gdip_ResizeBitmap(pBitmap, tw * scale, th * scale)
-		}
+	FromBitmap32Bit(this, pBitmap, scale := 1, param := 0, x:=0, y:=0) {
+		if scale > 1
+			Gdip_GetImageDimensions(pBitmap, &tw, &th), pBitmap := Gdip_ResizeBitmap(pBitmap, tw * scale, th * scale)
 		Gdip_GetImageDimensions(pBitmap, &w, &h)
 		Gdip_LockBits(pBitmap, 0, 0, w, h, &stride, &scan0, &bitmapData, 1)
 		
@@ -300,7 +294,7 @@ if !is64Bit and A_Is64bitOS and FileExist(A_LineFile "\..\..\submacros\AutoHotke
 		NumPut("uint", 4, data, 20)
 		NumPut("uint", 0, data, 24)
 		NumPut("uint", 0, data, 28)
-		NumPut("int", x, "int", y, "int", scale, "int", allresult ? 1 : 0, meta := Buffer(16, 0))
+		NumPut("int", x, "int", y, "int", scale, "int", param, meta := Buffer(16, 0))
 		
 		; put bitmap data inside shared memory
 		DllCall("RtlMoveMemory", "ptr", pMem, "ptr", data.Ptr, "uptr", 40)
@@ -319,7 +313,7 @@ if !is64Bit and A_Is64bitOS and FileExist(A_LineFile "\..\..\submacros\AutoHotke
 		; yay we're done (God I hate tis)
 		len := NumGet(pMemResult, "uint")
 		res := StrGet(pMemResult + 4, len, "UTF-8")
-		return res ? (allresult ? JSON.parse(res,, false) : res) : ''
+		return JSON.parse(res,, false)
 	}
 	RapidOcr.FromBitmap := FromBitmap32Bit
 } else {

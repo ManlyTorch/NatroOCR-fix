@@ -94,7 +94,7 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 
 		; get items
 		searchResult := RapidOcr.FromRect(windowX+xAdd, windowY+150, xWidth, windowHeight-150)
-		if !searchResult { ; no reading?
+		if !searchResult.Text { ; no reading
 			continue
 		}
 		lines := filterText(searchResult.Lines)

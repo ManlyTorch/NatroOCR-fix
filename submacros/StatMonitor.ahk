@@ -951,7 +951,7 @@ DetectHoney() {
 		Loop 2 {
 			pBMNew := Gdip_ResizeBitmap(pBM, ((A_Index = 1) ? (250 + i * 20) : (750 - i * 20)), 36 + i * 4, 2)
 			Gdip_BitmapApplyEffect(pBMNew, pEffect)
-			text := MultiStrReplace(RapidOcr.FromBitmap(pBMNew,,,false), Map("o", "0", "i", "1", "l", "1", "a", "4"))
+			text := MultiStrReplace(RapidOcr.FromBitmap(pBMNew).Text, Map("o", "0", "i", "1", "l", "1", "a", "4"))
 			Gdip_DisposeImage(pBMNew)
 			try detected[v := ((StrLen((n := RegExReplace(text, "\D"))) > 0) ? n : 0)] := detected.Has(v) ? [detected[v][1]+1, detected[v][2] " " i . A_Index] : [1, i . A_Index]
 		}

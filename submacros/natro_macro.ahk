@@ -10328,8 +10328,10 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		offsetY := GetYOffset(hwnd)
 		;check that performance stats is disabled
 		GetRobloxClientPos(hwnd)
-		if findTextInRect('networkping', windowX+windowWidth//4*3, windowY+offsetY, windowWidth//4, windowHeight//10+36, 2).Has('Line') {
-			Send '^{F7}'
+		Loop 2 {
+			if findTextInRect('networkping', windowX+windowWidth//4*3, windowY+offsetY, windowWidth//4, windowHeight//10+36, 2).Has('Line') {
+				Send '^{F7}'
+			}
 		}
 		;check to make sure you are not in dialog before reset
 		Loop 500 {
@@ -17892,9 +17894,12 @@ nm_GetQuestCorner(pos) {
 	yPos := 0
 	pBMScreen := Gdip_BitmapFromScreen(x "|" y "|300|30")
 	Gdip_LockBits(pBMScreen, 0, 0, 300, 30, &stride, &scan0, &hBitmapData)
+	gapCheck := false
 	Loop 50 {
 		pixelColor := NumGet(scan0+(A_Index-1)*stride, "UInt")
-		if pixelColor = 0xFFF46C55 or pixelColor = 0xFF6EFF60 or (pixelColor != 0xFFE5F0F7 and pixelColor != 0xFF96C3DE and pixelColor != 0xFF1B2A35) {
+		if pixelColor = 0xFF96C3DE {
+			gapCheck := true
+		} else if gapCheck and (pixelColor = 0xFFF46C55 or pixelColor = 0xFF6EFF60 or (pixelColor != 0xFFE5F0F7 and pixelColor != 0xFF1B2A35)) {
 			yPos := scan0+(A_Index-1)*stride
 			y += A_Index
 			break
@@ -17920,7 +17925,7 @@ nm_GetQuestPos(questGiver) {
 	
 	local line := '', startCorner := ''
 	local pBMLog := Gdip_BitmapFromScreen(windowX+30 "|" windowY+offsetY+180 "|30|400")
-	Loop 50 {
+	Loop 100 {
 		Loop (A_Index < 1 ? 5 : 2) {
 			local searchResult := findTextInRect(questGiver, windowX, windowY+150, 350, windowHeight-150, 2, filterQuests)
 			if searchResult.Has('Line') {
@@ -18026,7 +18031,7 @@ nm_UpdateQuestProg(questGiver, giverAffix, useCached:=false) {
 	local questProg := Array()
 	local curY := startCorner.y
 	local iterY := 0
-	local pBMScreen := Gdip_BitmapFromScreen(startCorner.x - 1 "|" curY "|1|" windowHeight - curY)
+	local pBMScreen := Gdip_BitmapFromScreen(startCorner.x - 5 "|" curY "|1|" windowHeight - curY)
 	;Gdip_LockBits, manual version to keep local scope.
 	local Rect := Buffer(16)
 	NumPut("UInt", 0, "UInt", 0, "UInt", 1, "UInt", windowHeight - curY, Rect)
@@ -18068,7 +18073,7 @@ nm_UpdateQuestProg(questGiver, giverAffix, useCached:=false) {
 				else if where="White"
 					where := HiveBees >= 10 ? "Pineapple" : HiveBees >= 5 ? "Spider" : "Sunflower"
 				else if where = "Any" {
-					where :=" None"
+					where := "None"
 					Quest%boostType%AnyField := 1
 				}
 				QuestGatherField := where

@@ -311,8 +311,7 @@ if !is64Bit and A_Is64bitOS and FileExist(A_LineFile "\..\..\submacros\AutoHotke
 			Gdip_DisposeImage(pBitmap)
 		
 		; yay we're done (God I hate tis)
-		len := NumGet(pMemResult, "uint")
-		res := StrGet(pMemResult + 4, len, "UTF-8")
+		res := StrGet(pMemResult, "UTF-8")
 		return JSON.parse(res,, false)
 	}
 	RapidOcr.FromBitmap := FromBitmap32Bit

@@ -23,10 +23,7 @@ RunBitmapOCR(*) {
     jsonStr := JSON.stringify(RapidOcr.FromBitmapData(data, scale, param, x, y))
     buf := Buffer(StrPut(jsonStr, "UTF-8"))
     StrPut(jsonStr, buf, "UTF-8")
-    lenBuf := Buffer(4, 0)
-    NumPut("uint", buf.Size, lenBuf)
-    DllCall("RtlMoveMemory", "ptr", pMemResult, "ptr", lenBuf.Ptr, "uptr", 4)
-    DllCall("RtlMoveMemory", "ptr", pMemResult + 4, "ptr", buf.Ptr, "uptr", buf.Size)
+    DllCall("RtlMoveMemory", "ptr", pMemResult, "ptr", buf.Ptr, "uptr", buf.Size)
     return
 }
 

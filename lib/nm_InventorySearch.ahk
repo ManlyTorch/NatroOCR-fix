@@ -23,7 +23,9 @@ MultiStrReplace(str, params*) {
 	return str
 }
 
-itemArray := ["Cog", "Ticket", "SprinklerBuilder", "BeequipCase", "Gumdrops", "Coconut", "Stinger", "Snowflake", "MicroConverter", "Honeysuckle", "Whirligig", "FieldDice", "SmoothDice", "LoadedDice", "JellyBeans", "RedExtract", "BlueExtract", "Glitter", "Glue", "Oil", "Enzymes", "TropicalDrink", "PurplePotion", "SuperSmoothie", "MarshmallowBee", "Sprout", "MagicBean", "FestiveBean", "CloudVial", "BloomShaker", "NightBell", "BoxOFrogs", "AntPass", "BrokenDrive", "7ProngedCog", "RoboPass", "Translator", "SpiritPetal", "Present", "Treat", "StarTreat", "AtomicTreat", "SunflowerSeed", "Strawberry", "Pineapple", "Blueberry", "Bitterberry", "Neonberry", "MoonCharm", "GingerbreadBear", "AgedGingerbreadBear", "WhiteDrive", "RedDrive", "BlueDrive", "GlitchedDrive", "ComfortingVial", "InvigoratingVial", "MotivatingVial", "RefreshingVial", "SatisfyingVial", "NectarShowerVial", "PinkBalloon", "RedBalloon", "WhiteBalloon", "BlackBalloon", "SoftWax", "HardWax", "CausticWax", "SwirledWax", "Turpentine", "PaperPlanter", "TicketPlanter", "StickerPlanter", "FestivePlanter", "PlasticPlanter", "CandyPlanter", "RedClayPlanter", "BlueClayPlanter", "TackyPlanter", "PesticidePlanter", "HeatTreatedPlanter", "HydroponicPlanter", "PetalPlanter", "PlanterOfPlenty", "BasicEgg", "SilverEgg", "GoldEgg", "DiamondEgg", "MythicEgg", "StarEgg", "GiftedSilverEgg", "GiftedGoldEgg", "GiftedDiamondEgg", "GiftedMythicEgg", "RoyalJelly", "StarJelly", "BumbleBeeEgg", "GiftedExhaustedBeeEgg", "GiftedFrostyBeeEgg", "GiftedDiamondBeeEgg", "BumbleBeeJelly", "RageBeeJelly", "ShockedBeeJelly", "BearBeeJelly", "CobaltBeeJelly", "CrimsonBeeJelly", "FestiveBeeJelly", "GummyBeeJelly", "PhotonBeeJelly", "PuppyBeeJelly", "TabbyBeeJelly", "ViciousBeeJelly"]
+itemArray := ["Cog", "Ticket", "SprinklerBuilder", "BeequipCase", "Gumdrops", "Coconut", "Stinger", "Snowflake", "MicroConverter", "Honeysuckle", "Whirligig", "FieldDice", "SmoothDice", "LoadedDice", "JellyBeans", "RedExtract", "BlueExtract", "Glitter", "Glue", "Oil", "Enzymes", "TropicalDrink", "PurplePotion", "SuperSmoothie", "MarshmallowBee", "MagicBean", "FestiveBean", "CloudVial", "BloomShaker", "NightBell", "BoxOFrogs", "AntPass", "BrokenDrive", "7ProngedCog", "RoboPass", "Translator", "SpiritPetal", "Present", "Treat", "StarTreat", "AtomicTreat", "SunflowerSeed", "Strawberry", "Pineapple", "Blueberry", "Bitterberry", "Neonberry", "MoonCharm", "GingerbreadBear", "AgedGingerbreadBear", "WhiteDrive", "RedDrive", "BlueDrive", "GlitchedDrive", "ComfortingVial", "InvigoratingVial", "MotivatingVial", "RefreshingVial", "SatisfyingVial", "NectarShowerVial", "PinkBalloon", "RedBalloon", "WhiteBalloon", "BlackBalloon", "SoftWax", "HardWax", "CausticWax", "SwirledWax", "Turpentine", "PaperPlanter", "TicketPlanter", "StickerPlanter", "FestivePlanter", "PlasticPlanter", "CandyPlanter", "RedClayPlanter", "BlueClayPlanter", "TackyPlanter", "PesticidePlanter", "HeatTreatedPlanter", "HydroponicPlanter", "PetalPlanter", "PlanterOfPlenty", "BasicEgg", "SilverEgg", "GoldEgg", "DiamondEgg", "MythicEgg", "StarEgg", "GiftedSilverEgg", "GiftedGoldEgg", "GiftedDiamondEgg", "GiftedMythicEgg", "RoyalJelly", "StarJelly", "BumbleBeeEgg", "GiftedExhaustedBeeEgg", "GiftedFrostyBeeEgg", "GiftedDiamondBeeEgg", "BumbleBeeJelly", "RageBeeJelly", "ShockedBeeJelly", "BearBeeJelly", "CobaltBeeJelly", "CrimsonBeeJelly", "FestiveBeeJelly", "GummyBeeJelly", "PhotonBeeJelly", "PuppyBeeJelly", "TabbyBeeJelly", "ViciousBeeJelly"]
+statusItemArray := itemArray.Clone()
+statusItemArray.InsertAt(26, "Sprout")
 (items := Map()).CaseSense := 0
 for idx, item in itemArray {
 	items[item] := [idx, item]
@@ -103,8 +105,21 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 		(itemLines := Map()).CaseSense := 0
 		foundIdx := 0
 
-		; ensure all lines are items.
-		firstItemIdx ? prevSearch(lines) : bruteForce(lines)
+		Loop 4 { ; see if we can find an item in the first few lines
+			if items.Has(lines[1].Text) {
+				foundItem := items[lines[1].Text]
+				if StrLen(lines[1].Text) > StrLen(foundItem[1]) + 3 ; likely an item description, not a real item.
+					continue
+				addLine(lines[1].Text, foundItem[2], foundItem[1])
+				firstItemIdx := foundItem[2]
+				lastItemIdx ?? lastItemIdx := foundItem[2]
+				break
+			} else if A_Index == 4
+				firstItemIdx -= 5
+		}
+
+		if !itemLines.Has(itemName)
+			getItems(lines)
 
 		hasItems := itemLines.Has(1)
 		firstItemIdx := hasItems ? itemLines[1].itemidx : 0
@@ -135,7 +150,7 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 
 		SendEvent "{Click " windowX+30 " " windowY+offsetY+200 " 0}"
 		SendInput "{Wheel" scrollDir " " scrollIntensity "}"
-		Sleep 550 ; wait for scroll to finish
+		Sleep 600 ; wait for scroll to finish
 
 		if !itemIdx and hasItems and prevFirstLine.Text = itemLines[1].Text {
 			if !doubleCheck {
@@ -148,27 +163,16 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 		doubleCheck := false
 	}
 
-	bruteForce(curLines) {
+	getItems(curLines) {
+		diff := firstItemIdx - lastItemIdx
+		startIdx := lastItemIdx - 3 - diff
 		for _, line in curLines {
 			if items.Has(line.Text) {
 				addLine(line, items[line.Text][2], items[line.Text][1])
 				continue
 			}
-			Loop itemArray.Length - lastItemIdx {
-				idx := lastItemIdx + A_Index
-				item := itemArray[idx]
-				if InStr(line.Text, StrLower(item)) {
-					addLine(line, item, idx)
-					break
-				}
-			}
-		}
-	}
-	prevSearch(curLines) {
-		searchIdx := firstItemIdx - 3
-		for _, line in curLines {
-			Loop itemArray.Length - firstItemIdx + 3 {
-				idx := searchIdx + A_Index
+			Loop itemArray.Length - lastItemIdx + 3 + diff {
+				idx := startIdx + A_Index
 				if itemArray.Length < idx {
 					break
 				}
@@ -181,6 +185,8 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 		}
 	}
 	addLine(line, item, idx) {
+		if StrLen(line.Text) > StrLen(item) + 3 ; likely an item description, not a real item.
+			return
 		foundIdx += 1
 		line.items := itemLines
 		line.item := item

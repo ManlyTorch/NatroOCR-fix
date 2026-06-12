@@ -28,9 +28,11 @@ You should have received a copy of the license along with Natro Macro. If not, p
 #Include "JSON.ahk"
 #Include "Roblox.ahk"
 #Include "DurationFromSeconds.ahk"
+#Include "OCR.ahk"
 #Include "nowUnix.ahk"
 #Include "ErrorHandling.ahk"
 #Include "HashFile.ahk"
+#Include "nm_InventorySearch.ahk"
 
 #Include "%A_ScriptDir%\..\Extensions\mondo_interrupt_extension.ahk"
 #Include "%A_ScriptDir%\..\Extensions\rays_althop_extension.ahk"
@@ -13416,7 +13418,6 @@ nm_Start(){
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #Include "%A_ScriptDir%\..\lib"
 #Include "nm_OpenMenu.ahk"
-#Include "nm_InventorySearch.ahk"
 ;interrupts
 nm_MondoInterrupt() => (utc_min := FormatTime(A_NowUTC, "m"), now := nowUnix(),
 	((MondoBuffCheck = 1) && ((utc_min<14 && (now-LastMondoBuff)>960 && MondoAction="Kill")
@@ -14044,10 +14045,10 @@ nm_imgSearch(fileName,v,aim := "full", trans:="none"){
 	}
 }
 PostSubmacroMessage(submacro, args*){
-	DetectHiddenWindows 1
+	prevDHW := DetectHiddenWindows(1)
 	if WinExist(submacro ".ahk ahk_class AutoHotkey")
 		try PostMessage(args*)
-	DetectHiddenWindows 0
+	DetectHiddenWindows(prevDHW)
 }
 nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 	global resetTime, youDied, KeyDelay, SC_E, SC_Esc, SC_R, SC_Enter, RotRight, RotLeft, RotUp, RotDown, ZoomOut, objective, AFBrollingDice, AFBuseGlitter, AFBuseBooster, currentField, HiveConfirmed, GameFrozenCounter, bitmaps
@@ -14500,52 +14501,21 @@ nm_AmuletPrompt(decision:=0, type:=0, *){
 	}
 }
 nm_FindItem(chosenItem, *) {
-	global shiftLockEnabled, bitmaps
-	static items := ["Cog", "Ticket", "SprinklerBuilder", "BeequipCase", "Gumdrops", "Coconut", "Stinger", "Snowflake", "MicroConverter", "Honeysuckle", "Whirligig", "FieldDice", "SmoothDice", "LoadedDice", "JellyBeans", "RedExtract", "BlueExtract", "Glitter", "Glue", "Oil", "Enzymes", "TropicalDrink", "PurplePotion", "SuperSmoothie", "MarshmallowBee", "Sprout", "MagicBean", "FestiveBean", "CloudVial", "NightBell", "BoxOFrogs", "AntPass", "BrokenDrive", "7ProngedCog", "RoboPass", "Translator", "SpiritPetal", "Present", "Treat", "StarTreat", "AtomicTreat", "SunflowerSeed", "Strawberry", "Pineapple", "Blueberry", "Bitterberry", "Neonberry", "MoonCharm", "GingerbreadBear", "AgedGingerbreadBear", "WhiteDrive", "RedDrive", "BlueDrive", "GlitchedDrive", "ComfortingVial", "InvigoratingVial", "MotivatingVial", "RefreshingVial", "SatisfyingVial", "PinkBalloon", "RedBalloon", "WhiteBalloon", "BlackBalloon", "SoftWax", "HardWax", "CausticWax", "SwirledWax", "Turpentine", "PaperPlanter", "TicketPlanter", "FestivePlanter", "PlasticPlanter", "CandyPlanter", "RedClayPlanter", "BlueClayPlanter", "TackyPlanter", "PesticidePlanter", "HeatTreatedPlanter", "HydroponicPlanter", "PetalPlanter", "ThePlanterOfPlenty", "BasicEgg", "SilverEgg", "GoldEgg", "DiamondEgg", "MythicEgg", "StarEgg", "GiftedSilverEgg", "GiftedGoldEgg", "GiftedDiamondEgg", "GiftedMythicEgg", "RoyalJelly", "StarJelly", "BumbleBeeEgg", "BumbleBeeJelly", "RageBeeJelly", "ShockedBeeJelly"]
+	global shiftLockEnabled
 	GetRobloxClientPos()
-	DetectHiddenWindows 1
-	if windowWidth == 0 {
-		if WinExist("Status.ahk ahk_class AutoHotkey")
-			sendMessage 0x5559
-		DetectHiddenWindows 0
-		return 0
+	if windowWidth = 0 {
+		return PostSubmacroMessage("Status", 0x5559)
 	}
-	Prev_ShiftLock := ShiftLockEnabled
 	yOffset := GetYOffset()
+	prev_ShiftLock := shiftLockEnabled
 	nm_setShiftLock(0)
-	ActivateRoblox()
-	if (nm_OpenMenu("itemmenu") = 0) {
-		if WinExist("Status.ahk ahk_class AutoHotkey")
-			SendMessage 0x5559,, 2
-		DetectHiddenWindows 0
-		nm_setShiftLock(Prev_ShiftLock)
-		return 0
+	if nm_OpenMenu("itemmenu") = 0 {
+		PostSubmacroMessage("Status", 0x5559,,2)
+		return nm_setShiftLock(prev_ShiftLock)
 	}
-	MouseMove windowX+46, windowY+yOffset+219
-	Loop 60 {
-		pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+150 "|306|" windowHeight-300)
-		if (Gdip_ImageSearch(pBMScreen, bitmaps[items[chosenitem]], &itemCoords,,,,,5)) {
-			Gdip_DisposeImage(pBMScreen)
-			break
-		}
-		for k,v in items {
-			if (Gdip_ImageSearch(pBMScreen, bitmaps[v], , , , , , 5)) {
-				Send "{Wheel" (k > chosenItem ? "Up" : "Down") " 1}"
-				break
-			}
-			if A_Index = items.length
-				Send "{WheelUp 1}"
-		}
-		Gdip_DisposeImage(pBMScreen)
-		sleep 300
-	}
-	DetectHiddenWindows 1
-	if !itemCoords
-		WinExist("Status.ahk ahk_class AutoHotkey") ? SendMessage(0x5559, 0, 1, , , , , , 2000) : ""
-	else
-		WinExist("Status.ahk ahk_class AutoHotkey") ? SendMessage(0x5559, StrSplit(itemCoords,",")[2]+windowY+140, , , , , , , 2000) : ""
-	sleep 1000
-	DetectHiddenWindows 0
+	itemRect := nm_InventorySearch(chosenItem)
+	PostSubmacroMessage("Status", 0x5559, (itemRect ? itemRect.Y : 16) - 16, 1)
+	Sleep 1000
 	nm_OpenMenu()
 	nm_setShiftLock(Prev_ShiftLock)
 }
@@ -15338,15 +15308,15 @@ nm_GlueDis(){
 			nm_gotoCollect("gluedis", 0) ; do not wait for end
 
 			;locate gumdrops
-			if ((gumdropPos := nm_InventorySearch("gumdrops")) = 0) { ;~ new function
+			if ((gumdropRect := nm_InventorySearch("gumdrops")) = 0) { ;~ new function
 				nm_OpenMenu()
 				continue
 			}
-			MouseMove windowX+gumdropPos[1], windowY+gumdropPos[2]
+			MouseMove windowX + 30, gumdropRect.Y + gumdropRect.H
 			KeyWait "F14", "T120 L"
 			nm_endWalk()
 
-			MouseClickDrag "Left", windowX+gumdropPos[1], windowY+gumdropPos[2], windowX+(windowWidth//2), windowY+(windowHeight//2), 5
+			MouseClickDrag "Left", windowX+30, gumdropRect.Y + gumdropRect.H, windowX+(windowWidth//2), windowY+(windowHeight//2), 5
 			;close inventory
 			nm_OpenMenu()
 			Sleep 500
@@ -23867,78 +23837,41 @@ nm_BrownQuest(){
 		IniWrite LastBrownQuest, "settings\nm_config.ini", "Quests", "LastBrownQuest"
 	}
 }
-nm_Feed(food){
+nm_Feed(food) {
 	global bitmaps
 	nm_setShiftLock(0)
 	nm_Reset(0,0,0,1)
 	nm_setStatus("Feeding", food)
 	;feed
-	nm_InventorySearch(food)
+	foodPos := nm_InventorySearch(food)
 	hwnd := GetRobloxHWND()
 	offsetY := GetYOffset(hwnd)
-	Loop 10
-	{
+	Loop 10 {
 		GetRobloxClientPos(hwnd)
-		pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|" (54*windowWidth)//100-50 "|" Max(480, windowHeight-offsetY-150))
 
-		if (A_Index = 1)
-		{
-			; wait for red vignette effect to disappear
-			Loop 40
-			{
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["item"], , , , 6, , 2) = 1)
-					break
-				else
-				{
-					if (A_Index = 40)
-					{
-						Gdip_DisposeImage(pBMScreen)
-						nm_setStatus("Missing", food)
-						return 0
-					}
-					else
-					{
-						Sleep 50
-						Gdip_DisposeImage(pBMScreen)
-						pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|" (54*windowWidth)//100-50 "|" Max(480, windowHeight-offsetY-150))
-					}
-				}
-			}
-		}
-
-		if ((Gdip_ImageSearch(pBMScreen, bitmaps[food], &pos, , , 306, , 10, , 5) != 1) || (Gdip_ImageSearch(pBMScreen, bitmaps["feed"], , (54*windowWidth)//100-300, , , , 2, , 2) = 1)) {
-			Gdip_DisposeImage(pBMScreen)
+		searchResult := findTextInRect("feed:", windowX+(54*windowWidth)//100-300, windowY+offsetY+(46*windowHeight)//100-59, 250, 100, 2)
+		foodPos := nm_InventorySearch(food)
+		if !foodPos or searchResult.Has("Word") {
 			break
 		}
-		Gdip_DisposeImage(pBMScreen)
 
-		MouseClickDrag "Left", windowX+30, windowY+SubStr(pos, InStr(pos, ",")+1)+190, windowX+windowWidth//2, windowY+41*windowHeight//100-10*(A_Index-1), 5
+		MouseClickDrag "Left", windowX+30, foodPos.Y + foodPos.H, windowX+windowWidth//2, windowY+41*windowHeight//100-10*(A_Index-1), 5
 		Sleep 500
 	}
 	Loop 20 {
 		Sleep 100
-		pBMScreen := Gdip_BitmapFromScreen(windowX+(54*windowWidth)//100-300 "|" windowY+offsetY+(46*windowHeight)//100-59 "|250|100")
-		if (Gdip_ImageSearch(pBMScreen, bitmaps["feed"], &pos, , , , , 2, , 2) = 1) {
-			Gdip_DisposeImage(pBMScreen)
-			MouseMove windowX+(54*windowWidth)//100-300+SubStr(pos, 1, InStr(pos, ",")-1)+140, windowY+offsetY+(46*windowHeight)//100-59+SubStr(pos, InStr(pos, ",")+1)+5 ; Number
+		searchResult := findTextInRect("feed:", windowX+(54*windowWidth)//100-300, windowY+offsetY+(46*windowHeight)//100-59, 250, 100, 2)
+		if searchResult.Has("Word") {
+			rect := searchResult["Word"].BoundingRect
+			SendEvent "{Click " rect.X + 140 " " rect.Y + 5 "}" ; Click Number
 			Sleep 100
-			Click
-			Sleep 100
-			Send "{Text}100"
-			Sleep 1000
-			MouseMove windowX+(54*windowWidth)//100-300+SubStr(pos, 1, InStr(pos, ",")-1), windowY+offsetY+(46*windowHeight)//100-59+SubStr(pos, InStr(pos, ",")+1) ; Feed
-			Sleep 100
-			Click
+			Loop 3 {
+				Send "{Text}" (A_Index == 1 ? "1" : "0")
+				Sleep 100
+			}
+			SendEvent "{Click " rect.X " " rect.Y "}" ; Click Feed
 			nm_setStatus("Completed", "Feed " food)
 			break
-		} else {
-			Gdip_DisposeImage(pBMScreen)
-			if (A_Index = 20) {
-				MouseMove windowX+(54*windowWidth)//100-300+SubStr(pos, 1, InStr(pos, ",")-1), windowY+offsetY+(46*windowHeight)//100-59+SubStr(pos, InStr(pos, ",")+1)+64 ; Cancel
-				Sleep 100
-				Click
-				nm_setStatus("Failed", "Feed " food)
-			}
 		}
 	}
 	MouseMove windowX+350, windowY+offsetY+100
@@ -25116,7 +25049,7 @@ ba_getNextPlanter(nextfield){
 	}
 	return [nextPlanterName, nextPlanterNectarBonus, nextPlanterGrowBonus, nextPlanterGrowTime]
 }
-ba_placePlanter(fieldName, planter, planterNum, atField:=0){
+ba_placePlanter(fieldName, planter, planterNum, atField:=0, ba:=1) {
 	global BambooFieldCheck, BlueFlowerFieldCheck, CactusFieldCheck, CloverFieldCheck, CoconutFieldCheck, DandelionFieldCheck, MountainTopFieldCheck, MushroomFieldCheck, PepperFieldCheck, PineTreeFieldCheck, PineappleFieldCheck, PumpkinFieldCheck, RoseFieldCheck, SpiderFieldCheck, StrawberryFieldCheck, StumpFieldCheck, SunflowerFieldCheck, MaxAllowedPlanters, LostPlanters, bitmaps
 
 	nm_updateAction("Planters")
@@ -25124,28 +25057,27 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0){
 	nm_setShiftLock(0)
 
 	planterName := planter[1]
-	if (atField = 0)
-	{
+	if (atField = 0) {
 		nm_Reset()
 		nm_OpenMenu("itemmenu")
 		nm_setStatus("Traveling", (planterName . " (" . fieldName . ")"))
 		nm_gotoPlanter(fieldName, 0)
 	}
 
-	planterPos := nm_InventorySearch(planterName, "up", 4)
+	invResult := nm_InventorySearch(planterName)
 
-	if (planterPos = 0) ; planter not in inventory
-	{
+	if (invResult = 0) { ; planter not in inventory
 		nm_setStatus("Missing", planterName)
-		LostPlanters.=planterName
-		ba_saveConfig_()
+		if ba {
+			LostPlanters.=planterName
+			ba_saveConfig_()
+		}
 		return 0
-	}
-	else
-	{
+	} else {
 		GetRobloxClientPos()
-		MouseMove windowX+planterPos[1], windowY+planterPos[2]
+		MouseMove windowX+30, invResult.Y + invResult.H
 	}
+	yPos := invResult.Y + invResult.H
 
 	KeyWait "F14", "T120 L" ; wait for gotoPlanter finish
 	nm_endWalk()
@@ -25153,84 +25085,59 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0){
 	nm_setStatus("Placing", planterName)
 	hwnd := GetRobloxHWND()
 	offsetY := GetYOffset(hwnd)
-	Loop 10
-	{
+	Loop 10 {
 		GetRobloxClientPos(hwnd)
-		pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|" windowWidth//2 "|" Max(480, windowHeight-offsetY-150))
 
-		if (A_Index = 1)
-		{
-			; wait for red vignette effect to disappear
-			Loop 40
-			{
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["item"], , , , 6, , 2) = 1)
-					break
-				else
-				{
-					if (A_Index = 40)
-					{
-						Gdip_DisposeImage(pBMScreen)
-						nm_setStatus("Missing", planterName)
-						LostPlanters.=planterName
-						ba_saveConfig_()
-						return 0
-					}
-					else
-					{
-						Sleep 50
-						Gdip_DisposeImage(pBMScreen)
-						pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|" windowWidth//2 "|" Max(480, windowHeight-offsetY-150))
-					}
-				}
-			}
+		invResult := nm_InventorySearch(planterName)
+		if invResult {
+			yPos := invResult.Y + invResult.H
 		}
 
-		if ((Gdip_ImageSearch(pBMScreen, bitmaps[planterName], &planterPos, , , 306, , 10, , 5) != 1) || (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], , windowWidth//2-250, , , , 2, , 2) = 1)) {
-			Gdip_DisposeImage(pBMScreen)
-			break
-		}
-		Gdip_DisposeImage(pBMScreen)
-
-		MouseClickDrag "Left", windowX+30, windowY+SubStr(planterPos, InStr(planterPos, ",")+1)+190, windowX+windowWidth//2, windowY+windowHeight//2, 5
+		MouseClickDrag "Left", windowX+30, yPos, windowX+windowWidth//2, windowY+windowHeight//2, 5
 		Sleep 200
+		
+		if findTextInRect("yes", windowX + windowWidth // 4, windowY + windowHeight//2, windowWidth // 4, windowHeight//2).Has("Word") {
+			break ; yes detected.
+		}
 	}
-	Loop 50
-	{
+	Loop 50 {
 		GetRobloxClientPos(hwnd)
 		loop 3 {
-			pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-			if (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], &pos, , , , , 2, , 2) = 1) {
-				MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
+			searchResult := findTextInRect("yes", windowX + windowWidth // 4, windowY + windowHeight//2, windowWidth // 4, windowHeight//2)
+			if searchResult.Has("Word") {
+				rect := searchResult["Word"].BoundingRect
+				MouseMove rect.x, rect.y
 				Sleep 150
 				Click
-				sleep 100
-				Gdip_DisposeImage(pBMScreen)
-				MouseMove windowX+350, windowY+offsetY+100
+				Sleep 100
+				MouseMove windowX + 350, windowY + offsetY + 100
 				break 2
 			}
-			Gdip_DisposeImage(pBMScreen)
-			Sleep 50 ; delay in case of lag
+			Sleep 50
 		}
-
+		
 		if (A_Index = 50) {
 			nm_setStatus("Missing", planterName)
-			LostPlanters.=planterName
-			ba_saveConfig_()
+			if ba {
+				LostPlanters.=planterName
+				ba_saveConfig_()
+			}
 			return 0
 		}
 
 		Sleep 100
 	}
 
-	Loop 10
-	{
+	Loop 10 {
 		Sleep 100
 		imgPos := nm_imgSearch("3Planters.png",30,"lowright")
 		If (imgPos[1] = 0){
-			MaxAllowedPlanters:=max(0, MaxAllowedPlanters-1)
-			MainGui["MaxAllowedPlanters"].Value := MaxAllowedPlanters
 			nm_setStatus("Error", "3 Planters already placed!`nMaxAllowedPlanters has been reduced.")
-			ba_saveConfig_()
+			if ba {
+				MaxAllowedPlanters:=max(0, MaxAllowedPlanters-1)
+				MainGui["MaxAllowedPlanters"].Value := MaxAllowedPlanters
+				ba_saveConfig_()
+			}
 			Sleep 500
 			return 3
 		}
@@ -25243,6 +25150,7 @@ ba_placePlanter(fieldName, planter, planterNum, atField:=0){
 			return 4
 		}
 	}
+
 	return 1
 }
 ba_harvestPlanter(planterNum){
@@ -25270,9 +25178,7 @@ ba_harvestPlanter(planterNum){
 		GetRobloxClientPos()
 
 		nm_OpenMenu("itemmenu")
-		planterPos := nm_InventorySearch(planterName, "up", 4)
-
-		if (planterPos != 0) { ; found planter in inventory planter is a phantom
+		if (nm_InventorySearch(planterName) != 0) { ; found planter in inventory planter is a phantom
 			nm_setStatus("Found", planterName . ". Clearing Data.")
 			;reset values
 			PlanterName%planterNum% := "None"
@@ -25592,7 +25498,7 @@ nm_planterSS(){
 
 mp_PlantPlanter(PlanterIndex) {
 	Global
-	Local CycleIndex, MFieldName, MPlanterName, planterPos, pBMScreen, imgPos, field, k, v, hwnd
+	Local CycleIndex, MFieldName, MPlanterName, pBMScreen, imgPos, field, k, v, hwnd
 	Static MHarvestIntervalValue := Map("30 mins", 0.5
 		, "1 hour", 1
 		, "2 hours", 2
@@ -25624,123 +25530,20 @@ mp_PlantPlanter(PlanterIndex) {
 		CycleIndex := PlanterManualCycle%PlanterIndex%
 		MFieldName := MSlot%PlanterIndex%Cycle%CycleIndex%Field
 		MPlanterName := (StrReplace(MSlot%PlanterIndex%Cycle%CycleIndex%Planter, " ") (MSlot%PlanterIndex%Cycle%CycleIndex%Planter = "Planter Of Plenty" ? "" : "Planter"))
-		If (PlanterField1 = MFieldName || PlanterField2 = MFieldName || PlanterField3 = MFieldName || PlanterName1 = MPlanterName || PlanterName2 = MPlanterName || PlanterName3 = MPlanterName) {
+		if (PlanterField1 = MFieldName || PlanterField2 = MFieldName || PlanterField3 = MFieldName || PlanterName1 = MPlanterName || PlanterName2 = MPlanterName || PlanterName3 = MPlanterName) {
 			PlanterManualCycle%PlanterIndex% := Mod(PlanterManualCycle%PlanterIndex%, MSlot%PlanterIndex%MaxCycle) + 1
 			mp_UpdateCycles()
-		} Else
-			Break
-		If (A_Index = MSlot%PlanterIndex%MaxCycle)
-			Return
-	}
-
-	nm_setShiftLock(0)
-
-	nm_Reset()
-	nm_OpenMenu("itemmenu")
-	nm_setStatus("Traveling", MPlanterName " (" MFieldName ")")
-	nm_gotoPlanter(MFieldName, 0)
-
-	ActivateRoblox()
-	GetRobloxClientPos()
-
-	planterPos := nm_InventorySearch(MPlanterName, "up", 4) ;~ new function
-
-	if (planterPos = 0) ; planter not in inventory
-	{
-		nm_setStatus("Missing", MPlanterName)
-		return 0
-	}
-	else
-		MouseMove windowX+planterPos[1], windowY+planterPos[2]
-
-	KeyWait "F14", "T120 L" ; wait for gotoPlanter finish
-	nm_endWalk()
-
-	nm_setStatus("Placing", MPlanterName)
-	hwnd := GetRobloxHWND()
-	offsetY := GetYOffset(hwnd)
-	Loop 10
-	{
-		GetRobloxClientPos(hwnd)
-		pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|" windowWidth//2 "|" Max(480, windowHeight-offsetY-150))
-
-		if (A_Index = 1)
-		{
-			; wait for red vignette effect to disappear
-			Loop 40
-			{
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["item"], , , , 6, , 2) = 1)
-					break
-				else
-				{
-					if (A_Index = 40)
-					{
-						Gdip_DisposeImage(pBMScreen)
-						nm_setStatus("Missing", MPlanterName)
-						return 0
-					}
-					else
-					{
-						Sleep 50
-						Gdip_DisposeImage(pBMScreen)
-						pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|" windowWidth//2 "|" Max(480, windowHeight-offsetY-150))
-					}
-				}
-			}
-		}
-
-		if ((Gdip_ImageSearch(pBMScreen, bitmaps[MPlanterName], &planterPos, , , 306, , 10, , 5) != 1) || (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], , windowWidth//2-250, , , , 2, , 2) = 1)) {
-			Gdip_DisposeImage(pBMScreen)
+		} else {
 			break
 		}
-		Gdip_DisposeImage(pBMScreen)
-
-		MouseClickDrag "Left", windowX+30, windowY+SubStr(planterPos, InStr(planterPos, ",")+1)+190, windowX+windowWidth//2, windowY+windowHeight//2, 5
-		Sleep 200
-	}
-	Loop 50
-	{
-		GetRobloxClientPos(hwnd)
-		loop 3 {
-			pBMScreen := Gdip_BitmapFromScreen(windowX+windowWidth//2-250 "|" windowY+windowHeight//2-52 "|500|150")
-			if (Gdip_ImageSearch(pBMScreen, bitmaps["yes"], &pos, , , , , 2, , 2) = 1) {
-				MouseMove windowX+windowWidth//2-250+SubStr(pos, 1, InStr(pos, ",")-1), windowY+windowHeight//2-52+SubStr(pos, InStr(pos, ",")+1)
-				Sleep 150
-				Click
-				sleep 100
-				Gdip_DisposeImage(pBMScreen)
-				MouseMove windowX+350, windowY+offsetY+100
-				break 2
-			}
-			Gdip_DisposeImage(pBMScreen)
-			Sleep 50 ; delay in case of lag
+		if (A_Index = MSlot%PlanterIndex%MaxCycle) {
+			return
 		}
-
-		if (A_Index = 50) {
-			nm_setStatus("Missing", MPlanterName)
-			return 0
-		}
-
-		Sleep 100
 	}
 
-	Loop 10
-	{
-		Sleep 100
-		imgPos := nm_imgSearch("3Planters.png",30,"lowright")
-		If (imgPos[1] = 0){
-			nm_setStatus("Error", "3 Planters already placed!")
-			Sleep 500
-			return 3
-		}
-		imgPos := nm_imgSearch("planteralready.png",30,"lowright")
-		If (imgPos[1] = 0){
-			return 2
-		}
-		imgPos := nm_imgSearch("standing.png",30,"lowright")
-		If (imgPos[1] = 0){
-			return 4
-		}
+	res := ba_placePlanter(MFieldName, [MPlanterName], PlanterIndex,,0)
+	if res != 1 {
+		return res
 	}
 
 	PlanterName%PlanterIndex% := MPlanterName
@@ -25758,9 +25561,11 @@ mp_PlantPlanter(PlanterIndex) {
 		}
 	} else {
 		PlanterHarvestTime%PlanterIndex% := nowUnix() + Integer(3600 * MHarvestIntervalValue[MHarvestInterval])
-		Loop 3
-			If (PlanterHarvestTime%A_Index% < PlanterHarvestTime%PlanterIndex% && PlanterHarvestTime%A_Index% > PlanterHarvestTime%PlanterIndex% - 300)
+		Loop 3 {
+			If (PlanterHarvestTime%A_Index% < PlanterHarvestTime%PlanterIndex% && PlanterHarvestTime%A_Index% > PlanterHarvestTime%PlanterIndex% - 300) {
 				PlanterHarvestTime%PlanterIndex% := PlanterHarvestTime%A_Index%
+			}
+		}
 	}
 
 	IniWrite PlanterName%PlanterIndex%, "settings\nm_config.ini", "Planters", "PlanterName" PlanterIndex
@@ -25771,8 +25576,9 @@ mp_PlantPlanter(PlanterIndex) {
 	IniWrite PlanterHarvestFull%PlanterIndex%, "settings\nm_config.ini", "Planters", "PlanterHarvestFull" PlanterIndex
 	IniWrite PlanterHarvestTime%PlanterIndex%, "settings\nm_config.ini", "Planters", "PlanterHarvestTime" PlanterIndex
 
-	If (nowUnix() - LastGlitter >= 900 && PlanterGlitterC%PlanterIndex% && !PlanterGlitter%PlanterIndex%)
+	If (nowUnix() - LastGlitter >= 900 && PlanterGlitterC%PlanterIndex% && !PlanterGlitter%PlanterIndex%) {
 		mp_UseGlitter(PlanterIndex, 1)
+	}
 
 	return 1
 }
@@ -25792,15 +25598,12 @@ mp_UseGlitter(PlanterIndex, atField:=0) {
 
 	glitterPos := nm_InventorySearch("glitter")
 
-	if (glitterPos = 0) ; glitter not in inventory
-	{
+	if glitterPos = 0 { ; glitter not in inventory
 		nm_setStatus("Missing", "Glitter")
 		return 0
-	}
-	else
-	{
+	} else {
 		GetRobloxClientPos()
-		MouseMove windowX+glitterPos[1], windowY+glitterPos[2]
+		MouseMove windowX + 30, glitterPos.Y + glitterPos.H
 	}
 
 	KeyWait "F14", "T120 L" ; wait for gotoPlanter finish
@@ -25808,43 +25611,15 @@ mp_UseGlitter(PlanterIndex, atField:=0) {
 
 	hwnd := GetRobloxHWND()
 	offsetY := GetYOffset(hwnd)
-	Loop 10
-	{
+	Loop 10 {
 		GetRobloxClientPos(hwnd)
-		pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|" windowWidth//2 "|" Max(480, windowHeight-offsetY-150))
 
-		if (A_Index = 1)
-		{
-			; wait for red vignette effect to disappear
-			Loop 40
-			{
-				if (Gdip_ImageSearch(pBMScreen, bitmaps["item"], , , , 6, , 2) = 1)
-					break
-				else
-				{
-					if (A_Index = 40)
-					{
-						Gdip_DisposeImage(pBMScreen)
-						nm_setStatus("Missing", "Glitter")
-						return 0
-					}
-					else
-					{
-						Sleep 50
-						Gdip_DisposeImage(pBMScreen)
-						pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY+offsetY+150 "|306|" Max(480, windowHeight-offsetY-150))
-					}
-				}
-			}
-		}
-
-		if ((Gdip_ImageSearch(pBMScreen, bitmaps["glitter"], &glitterPos, , , 306, , 10, , 5) != 1)) {
-			Gdip_DisposeImage(pBMScreen)
+		glitterPos := nm_InventorySearch("glitter")
+		if glitterPos = 0 {
 			break
 		}
-		Gdip_DisposeImage(pBMScreen)
 
-		MouseClickDrag "Left", windowX+30, windowY+SubStr(glitterPos, InStr(glitterPos, ",")+1)+190, windowX+windowWidth//2, windowY+windowHeight//2, 5
+		MouseClickDrag "Left", windowX+30, glitterPos.Y + glitterPos.H, windowX+windowWidth//2, windowY+windowHeight//2, 5
 		Sleep 200
 	}
 
@@ -25859,7 +25634,7 @@ mp_UseGlitter(PlanterIndex, atField:=0) {
 
 mp_HarvestPlanter(PlanterIndex) {
 	Global
-	Local CycleIndex, MPlanterName, MFieldName, findPlanter, planterPos, pBMScreen, hwnd
+	Local CycleIndex, MPlanterName, MFieldName, findPlanter, pBMScreen, hwnd
 
 	nm_updateAction("Planters")
 
@@ -25884,10 +25659,7 @@ mp_HarvestPlanter(PlanterIndex) {
 	if (findPlanter = 0) {
 		;check for phantom planter
 		nm_setStatus("Checking", "Phantom Planter: " . MPlanterName)
-
-		planterPos := nm_InventorySearch(MPlanterName, "up", 4) ;~ new function
-
-		if (planterPos != 0) { ; found planter in inventory planter is a phantom
+		if (nm_InventorySearch(MPlanterName) != 0) { ; found planter in inventory planter is a phantom
 			nm_setStatus("Found", MPlanterName . ". Clearing Data.")
 
 			;reset disable auto harvest values if phantom planter

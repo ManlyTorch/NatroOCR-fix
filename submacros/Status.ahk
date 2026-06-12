@@ -26,6 +26,8 @@ You should have received a copy of the license along with Natro Macro. If not, p
 #Include "ErrorHandling.ahk"
 
 SetWorkingDir A_ScriptDir "\.."
+#Include "%A_ScriptDir%\..\Extensions\reconnectsync_status_extension.ahk"
+#Include "%A_ScriptDir%\..\Extensions\rays_tadsync_status_extension.ahk"
 CoordMode "Mouse", "Client"
 
 if (A_Args.Length = 0)
@@ -92,6 +94,9 @@ OnMessage(0xC2, nm_setStatus, 255)
 OnMessage(0x5552, nm_setGlobalInt, 255)
 OnMessage(0x5553, nm_setGlobalStr, 255)
 OnMessage(0x5556, nm_sendHeartbeat)
+OnMessage(0x5561, aq_announce)
+OnMessage(0x5562, aq_announceHiveStandby)
+OnMessage(0x5566, recon_SendReconnectSyncBroadcast)
 OnMessage(0x5559, nm_sendItemPicture)
 
 discord.SendEmbed("Connected to Discord!", 5066239)
@@ -232,12 +237,12 @@ settings["AntPassAction"] := {enum: 30, type: "str", section: "Collect", regex: 
 settings["FieldBooster1"] := {enum: 31, type: "str", section: "Boost", regex: "i)^(None|Blue|Red|Mountain)$"}
 settings["FieldBooster2"] := {enum: 32, type: "str", section: "Boost", regex: "i)^(None|Blue|Red|Mountain)$"}
 settings["FieldBooster3"] := {enum: 33, type: "str", section: "Boost", regex: "i)^(None|Blue|Red|Mountain)$"}
-settings["HotbarWhile2"] := {enum: 34, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter)$"}
-settings["HotbarWhile3"] := {enum: 35, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter)$"}
-settings["HotbarWhile4"] := {enum: 36, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter)$"}
-settings["HotbarWhile5"] := {enum: 37, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter)$"}
-settings["HotbarWhile6"] := {enum: 38, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter)$"}
-settings["HotbarWhile7"] := {enum: 39, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter)$"}
+settings["HotbarWhile2"] := {enum: 34, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter|WhileBoosted)$"}
+settings["HotbarWhile3"] := {enum: 35, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter|WhileBoosted)$"}
+settings["HotbarWhile4"] := {enum: 36, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter|WhileBoosted)$"}
+settings["HotbarWhile5"] := {enum: 37, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter|WhileBoosted)$"}
+settings["HotbarWhile6"] := {enum: 38, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter|WhileBoosted)$"}
+settings["HotbarWhile7"] := {enum: 39, type: "str", section: "Boost", regex: "i)^(Never|Always|At Hive|Gathering|Attacking|Microconverter|Whirligig|Enzymes|GatherStart|Snowflake|Glitter|WhileBoosted)$"}
 settings["QuestGatherReturnBy"] := {enum: 40, type: "str", section: "Quests", regex: "i)^(Walk|Reset)$"}
 settings["MoveSpeedNum"] := {enum: 41, type: "str", section: "Settings", regex: "i)^[1-9]\d(\.\d{1,3})?$"}
 settings["ReconnectInterval"] := {enum: 42, type: "str", section: "Settings", regex: "i)^(1|2|3|4|6|8|12|24|<blank>)$"}
@@ -646,6 +651,16 @@ settings["HoneyUpdateSSCheck"] := {enum: 363, type: "int", section: "Status", re
 settings["StickerStackVoucher"] := {enum: 364, type: "int", section: "Boost", regex: "i)^(0|1)$"}
 settings["MGatherPlanterLoot"] := {enum: 365, type: "int", section: "Planters", regex: "i)^(0|1)$"}
 settings["PriorityListNumeric"] := {enum: 366, type: "int", section: "Settings", regex: "i)^[1-8]{8}$"}
+settings["FieldFollowingCheck"] := {enum: ResolveEnumInt("FieldFollowingCheck", 367), type: "int", section: "Extensions", regex: "i)^(0|1)$"}
+settings["BlueBoosterInterruptCheck"] := {enum: ResolveEnumInt("BlueBoosterInterruptCheck", 370), type: "int", section: "Boost", regex: "i)^(0|1)$"}
+settings["StickerStackInterruptCheck"] := {enum: ResolveEnumInt("StickerStackInterruptCheck", 371), type: "int", section: "Boost", regex: "i)^(0|1)$"}
+settings["PFieldBoosted"] := {enum: ResolveEnumInt("PFieldBoosted", 372), type: "int", section: "Extensions", regex: "i)^(0|1)$"}
+settings["PreGlitterCheck"] := {enum: ResolveEnumInt("PreGlitterCheck", 373), type: "int", section: "Extensions", regex: "i)^(0|1)$"}
+settings["EnzymesBoostedOnly"] := {enum: ResolveEnumInt("EnzymesBoostedOnly", 374), type: "int", section: "Extensions", regex: "i)^(0|1)$"}
+settings["MondoInterruptCheck"] := {enum: ResolveEnumInt("MondoInterruptCheck", 375), type: "int", section: "Extensions", regex: "i)^(0|1)$"}
+settings["ReconnectSyncCheck"] := {enum: ResolveEnumInt("ReconnectSyncCheck", 376), type: "int", section: "Extensions", regex: "i)^(0|1)$"}
+settings["ReconnectSyncMode"] := {enum: ResolveEnumInt("ReconnectSyncMode", 377), type: "str", section: "Extensions", regex: "i)^(Main|Alt)$"}
+settings["ReconnectSyncChannelID"] := {enum: ResolveEnumInt("ReconnectSyncChannelID", 378), type: "str", section: "Extensions", regex: "i)^\d{0,20}$"}
 
 
 bitmaps := Map()
@@ -658,6 +673,8 @@ Loop
 {
 	(status_buffer.Length > 0) && nm_status(status_buffer[1])
 	(Mod(A_Index, 5) = 0) && discord.GetCommands(MainChannelID)
+	(Mod(A_Index, 5) = 0) && reconnectsync_PollAlt()
+	(Mod(A_Index, 5) = 0 && FieldFollowingCheck) && aq_getFollowingField()
 	(command_buffer.Length > 0) && nm_command(command_buffer[1])
 	(Mod(A_Index, 10) = 0) && nm_honey()
 	((DebugLogEnabled = 1) && (logsize > 8000000)) && nm_TrimLog(4194304) ; trim to 4MiB
@@ -696,7 +713,10 @@ nm_status(status)
 		}
 
 		; ping
-		content := ((criticalCheck = 1) && discordUID
+		autoJellyPing := discordUID
+			&& (InStr(stateString, "Auto-Jelly") || InStr(stateString, "Bitterberry Auto-Feeder"))
+			&& ((state = "Error") || (state = "Failed") || (state = "Warning") || (state = "Detected"))
+		content := ((((criticalCheck = 1) && discordUID
 			&& (((CriticalErrorPingCheck = 1) && (state = "Error"))
 			|| ((DisconnectPingCheck = 1) && InStr(stateString, "Disconnected"))
 			|| ((GameFrozenPingCheck = 1) && (InStr(stateString, "Resetting: Character") && (Mod(SubStr(objective, InStr(objective, " ")+1), 10) = 5)))
@@ -704,7 +724,8 @@ nm_status(status)
 			|| ((UnexpectedDeathPingCheck = 1) && (state = "You Died"))
 			|| ((EmergencyBalloonPingCheck = 1) && InStr(stateString, "No Balloon Convert"))
 			|| ((PlanterSSCheck = 1) && ((state = "Holding") && InStr(stateString, "Planter")))
-			|| ((state = "Obtained") && InStr(stateString, "Amulet"))))
+			|| ((state = "Obtained") && InStr(stateString, "Amulet")))))
+			|| autoJellyPing)
 			? ("<@" discordUID ">") : ""
 
 		; status update (embed)
@@ -716,6 +737,7 @@ nm_status(status)
 			|| ((AmuletSSCheck = 1) && InStr(stateString, "Amulet"))
 			|| ((MachineSSCheck = 1) && (state = "Collected"))
 			|| ((BalloonSSCheck = 1) && (stateString = "Converting: Balloon"))
+			|| (((state = "Detected") || (state = "Keeping")) && (InStr(stateString, "Auto-Jelly") || InStr(stateString, "Bitterberry Auto-Feeder")))
 			|| ((ViciousSSCheck = 1) && InStr(stateString, "Completed: Vicious Bee"))
 			|| ((DeathSSCheck = 1) && (state = "You Died"))
 			|| ((state = "Detected") && InStr(stateString, "Night"))
@@ -853,6 +875,7 @@ nm_command(command)
 			case "s","set":
 			sections := Map("Boost", "**__Boost__**"
 				,"Collect", "**__Collect__**"
+				,"Extensions", "**__Extensions__**"
 				,"Gather", "**__Gather__**"
 				,"Planters", "**__Planters__**"
 				,"Quests", "**__Quests__**"
@@ -927,6 +950,11 @@ nm_command(command)
 					{
 						"name": "' commandPrefix 'get [setting]",
 						"value": "Gets the current value of a setting in the macro",
+						"inline": true
+					},
+					{
+						"name": "' commandPrefix 'modset [module] [0/1]",
+						"value": "Sets a patched module toggle like `GlitterExtend` or `MondoInterruptCheck`",
 						"inline": true
 					},
 					{
@@ -1057,7 +1085,7 @@ nm_command(command)
 					},
 					{
 						"name": "' commandPrefix 'keep or ' commandPrefix 'replace",
-						"value": "Keeps/replaces an amulet if prompt is on screen",
+						"value": "Keeps/replaces an amulet prompt if it is on screen",
 						"inline": true
 					},
 					{
@@ -1171,6 +1199,127 @@ nm_command(command)
 			discord.SendEmbed("Macro has already been started!", 16711731, , , , id)
 
 
+
+
+		case "modset":
+		Loop 1
+		{
+			moduleName := ResolveModuleSetting(params[2], &displayName)
+			if !moduleName
+			{
+				discord.SendEmbed(Format("{} is not a valid module toggle! Use ?help advanced for the ?modset format.", (StrLen(params[2]) > 0) ? params[2] : "<blank>"), 16711731, , , , id)
+				break
+			}
+
+			value := Trim(SubStr(command.content, InStr(command.content, params[2]) + StrLen(params[2])))
+			switch StrLower(value), 0
+			{
+				case "on":
+				value := 1
+				case "off":
+				value := 0
+			}
+
+			if !(value ~= "i)^(0|1)$")
+			{
+				discord.SendEmbed(Format("{} is not a valid module toggle value! Use 0/1 or off/on.", (StrLen(value) > 0) ? value : "<blank>"), 16711731, , , , id)
+				break
+			}
+
+			v := settings[moduleName]
+			(v.type = "str")
+				? UpdateStr(moduleName, (value = "<blank>") ? "" : value, v.section)
+				: UpdateInt(moduleName, value, v.section)
+			discord.SendEmbed(Format("Set module {} to {}!", displayName, value), 5066239, , , , id)
+		}
+
+
+
+
+		case "hourlyreport", "hr":
+		{
+			SetTitleMatchMode 2
+			DetectHiddenWindows 1
+			if (hwnd := WinExist("StatMonitor"))
+			{
+				PostMessage 0x5563, 1, 0,, "ahk_id " hwnd
+				discord.SendEmbed("Requested Hourly Report generation.", 5066239, , , , id)
+			}
+			else
+			{
+				discord.SendEmbed("Error: StatMonitor script not found! Make sure it is open.", 16711731, , , , id)
+			}
+		}
+
+
+
+
+		case "stickerstack", "stacktest", "ssforce":
+		{
+			DetectHiddenWindows 1
+			if (hwnd := WinExist("natro_macro ahk_class AutoHotkey"))
+			{
+				PostMessage 0x5564, 1, 0,, "ahk_id " hwnd
+				discord.SendEmbed("Forced Sticker Stack interrupt armed. It will trigger on the next interrupt check.", 5066239, , , , id)
+			}
+			else
+			{
+				discord.SendEmbed("Error: Macro not found!", 16711731, , , , id)
+			}
+		}
+
+
+
+
+		case "fb", "fieldbooster", "bluebooster":
+		{
+			DetectHiddenWindows 1
+			if (hwnd := WinExist("natro_macro ahk_class AutoHotkey"))
+			{
+				PostMessage 0x5565, 1, 0,, "ahk_id " hwnd
+				discord.SendEmbed("Forced Blue Field Booster interrupt armed. It will trigger on the next interrupt check.", 5066239, , , , id)
+			}
+			else
+			{
+				discord.SendEmbed("Error: Macro not found!", 16711731, , , , id)
+			}
+		}
+
+
+
+
+		case "yes":
+		{
+			DetectHiddenWindows 1
+			SetTitleMatchMode 3
+			if (hwnd := WinExist("Auto-Jelly! ahk_class #32770"))
+			{
+				ControlClick "Button1", "ahk_id " hwnd
+				discord.SendEmbed("Clicked Yes on the active Auto-Jelly prompt.", 5066239, , , , id)
+			}
+			else
+			{
+				discord.SendEmbed("Error: No active Auto-Jelly prompt found.", 16711731, , , , id)
+			}
+		}
+
+
+		case "no":
+		{
+			DetectHiddenWindows 1
+			SetTitleMatchMode 3
+			if (hwnd := WinExist("Auto-Jelly! ahk_class #32770"))
+			{
+				ControlClick "Button2", "ahk_id " hwnd
+				discord.SendEmbed("Clicked No on the active Auto-Jelly prompt.", 5066239, , , , id)
+			}
+			else
+			{
+				discord.SendEmbed("Error: No active Auto-Jelly prompt found.", 16711731, , , , id)
+			}
+		}
+
+
 		case "close":
 		DetectHiddenWindows 0
 		if (hwnd := WinExist(window := Trim(SubStr(command.content, InStr(command.content, name)+StrLen(name)))))
@@ -1244,6 +1393,18 @@ nm_command(command)
 		}
 		else
 			discord.SendEmbed("Reconnect delay must be an integer less than or equal to 600!\nYou entered ``" params[2] "``.", 16711731, , , , id)
+
+
+		case "reconnecttest","dailyreconnecttest":
+		DetectHiddenWindows 1
+		if (hwnd := WinExist("natro_macro ahk_class AutoHotkey"))
+		{
+			PostMessage 0x5557, 60, 1,, "ahk_id " hwnd
+			FileAppend(A_Now " - Queued Daily Reconnect test via Discord`r`n", "settings\debug_log.txt", "UTF-8")
+			discord.SendEmbed("Queued Daily Reconnect test. It will leave after convert once the boost window is safe.", 5066239, , , , id)
+		}
+		else
+			discord.SendEmbed("Error: Macro not found!", 16711731, , , , id)
 
 
 		case "log":
@@ -2548,6 +2709,66 @@ nm_sendPostData(wParam, lParam, *) ; currently only ReportChannelID
 }
 
 nowUnix() => DateDiff(A_NowUTC, "19700101000000", "Seconds")
+
+ResolveEnumInt(name, fallback := 0)
+{
+	static enumMap := ""
+	if !IsObject(enumMap) {
+		enumMap := Map()
+		enumPath := A_ScriptDir "\..\lib\enum\EnumInt.ahk"
+		try text := FileRead(enumPath, "UTF-8")
+		catch
+			return fallback
+		index := 0
+		for line in StrSplit(text, Chr(10), Chr(13))
+		{
+			line := Trim(line)
+			if (SubStr(line, 1, 1) != Chr(34))
+				continue
+			endQuote := InStr(line, Chr(34), , 2)
+			if !endQuote
+				continue
+			index += 1
+			enumName := SubStr(line, 2, endQuote - 2)
+			enumMap[StrLower(enumName)] := index
+		}
+	}
+	key := StrLower(Trim(name))
+	return enumMap.Has(key) ? enumMap[key] : fallback
+}
+
+ResolveModuleSetting(name, &displayName := "")
+{
+	static moduleAliases := Map(
+		"fieldfollowingcheck", "FieldFollowingCheck",
+		"fieldfollowing", "FieldFollowingCheck",
+		"blueboosterinterruptcheck", "BlueBoosterInterruptCheck",
+		"bfbinterrupt", "BlueBoosterInterruptCheck",
+		"bfbinterupt", "BlueBoosterInterruptCheck",
+		"stickerstackinterruptcheck", "StickerStackInterruptCheck",
+		"stickerstackinterrupt", "StickerStackInterruptCheck",
+		"glitterextend", "PFieldBoosted",
+		"pfieldboosted", "PFieldBoosted",
+		"preglittercheck", "PreGlitterCheck",
+		"preglitter", "PreGlitterCheck",
+		"enzymesboostedonly", "EnzymesBoostedOnly",
+		"mondointerruptcheck", "MondoInterruptCheck",
+		"mondointerrupt", "MondoInterruptCheck",
+		"mondointeruptcheck", "MondoInterruptCheck",
+		"mondointerupt", "MondoInterruptCheck"
+	)
+	static displayAliases := Map(
+		"PFieldBoosted", "GlitterExtend"
+	)
+	key := Trim(name)
+	if !StrLen(key)
+		return ""
+	if !moduleAliases.Has(StrLower(key))
+		return ""
+	moduleName := moduleAliases[StrLower(key)]
+	displayName := displayAliases.Has(moduleName) ? displayAliases[moduleName] : moduleName
+	return moduleName
+}
 
 UpdateStr(var, value, section)
 {

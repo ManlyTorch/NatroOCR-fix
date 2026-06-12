@@ -112,7 +112,7 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 					continue
 				addLine(lines[1].Text, foundItem[2], foundItem[1])
 				firstItemIdx := foundItem[2]
-				lastItemIdx ?? lastItemIdx := foundItem[2]
+				lastItemIdx := lastItemIdx ? lastItemIdx : foundItem[2]
 				break
 			} else if A_Index == 4
 				firstItemIdx -= 5

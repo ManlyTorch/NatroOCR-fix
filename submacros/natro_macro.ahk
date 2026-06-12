@@ -12009,6 +12009,8 @@ nm_FindItem(chosenItem, *) {
 		PostSubmacroMessage("Status", 0x5559,,2)
 		return nm_setShiftLock(prev_ShiftLock)
 	}
+	if chosenItem > 26
+		chosenItem -= 1
 	itemRect := nm_InventorySearch(chosenItem)
 	PostSubmacroMessage("Status", 0x5559, (itemRect ? itemRect.Y - 16 : 0), 1)
 	Sleep 1000
@@ -19885,7 +19887,7 @@ nm_QuestRotate(){
 }
 
 nm_GetQuestCorner(pos) {
-	x := pos.x, y := pos.y + pos.h
+	x := pos.x + pos.w//2, y := pos.y + pos.h
 	yPos := 0
 	pBMScreen := Gdip_BitmapFromScreen(x "|" y "|300|30")
 	Gdip_LockBits(pBMScreen, 0, 0, 300, 30, &stride, &scan0, &hBitmapData)

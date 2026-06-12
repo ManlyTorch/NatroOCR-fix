@@ -132,7 +132,7 @@ class RapidOcr {
 	; Image binary data
 	static FromBinary(data, size, scale:=1, param := 0, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectBinary', 'ptr', this.Engine, 'ptr', data, 'uptr', size, 'ptr', param, 'ptr', RapidOcr.__cb(scale, x, y), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.debugError()
 
-	static FromBitmapData(data, scale:=1, param:=0, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectBitmapData', 'ptr', this.Engine, 'ptr', data, 'ptr', param, 'ptr', RapidOcr.__cb(x, y, scale), 'ptr', ObjPtr(&res), 'cdecl') ? res : this.Engine.debugError()
+	static FromBitmapData(data, scale:=1, param:=0, x:=0, y:=0) => DllCall('RapidOcrOnnx\OcrDetectBitmapData', 'ptr', this.Engine, 'ptr', data, 'ptr', param, 'ptr', RapidOcr.__cb(x, y, scale), 'ptr', ObjPtr(&res), 'cdecl') ? (res is String ? {Lines:Array(),Text:''} : res) : this.Engine.debugError()
 
 	; `struct BITMAP_DATA { void *bits; uint pitch; int width, height, bytespixel;};`
 	static FromBitmap64Bit(pBitmap, scale := 1, param := 0, x:=0, y:=0) {

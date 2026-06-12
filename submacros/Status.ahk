@@ -2427,13 +2427,13 @@ nm_command(command)
 			command_buffer.RemoveAt(1)
 			return discord.SendEmbed("Missing item name!\n``````" . commandPrefix . "finditem [itemname]``````", 16711731, , , , id)
 		}
-		closestItem:=findClosestItem(itemArray,UI)
+		closestItem:=findClosestItem(statusItemArray,UI)
 		if closestItem.dist > 6 || not closestItem.item
 			discord.SendEmbed("Item ``" UI "`` is not valid", 5066239, , , , id)
 		else
 			DetectHiddenWindows 1
 			if WinExist("natro_macro ahk_class AutoHotkey")
-				SendMessage(0x5559, ObjHasValue(itemArray,closestItem.item),,,,,,,2000)	
+				SendMessage(0x5559, ObjHasValue(statusItemArray,closestItem.item),,,,,,,2000)	
 			DetectHiddenWindows 0
 
 		case 'Debug', 'Debuglog':

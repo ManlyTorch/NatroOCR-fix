@@ -108,8 +108,6 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 		Loop 4 { ; see if we can find an item in the first few lines
 			if items.Has(lines[1].Text) {
 				foundItem := items[lines[1].Text]
-				if StrLen(lines[1].Text) > StrLen(foundItem[1]) + 8 ; likely an item description, not a real item.
-					continue
 				addLine(lines[1].Text, foundItem[2], foundItem[1])
 				firstItemIdx := foundItem[2]
 				lastItemIdx := lastItemIdx ? lastItemIdx : foundItem[2]
@@ -185,8 +183,6 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 		}
 	}
 	addLine(line, item, idx) {
-		if StrLen(line.Text) > StrLen(item) + 8 ; likely an item description, not a real item.
-			return
 		foundIdx += 1
 		line.items := itemLines
 		line.item := item

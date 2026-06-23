@@ -10436,10 +10436,15 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 			KeyWait "F14", "T20 L"
 			nm_endWalk()
 			sleep 500
-			if nm_ConfirmAtHive()
+			if nm_ConfirmAtHive() {
 				HiveConfirmed := 1
+				sendinput "{" RotRight " 4}" (hivedown ? ("{" RotUp "}") : "")
+				Send "{" ZoomOut " 5}"
+			}
 		} else {
-			nm_SetHiveCameraDirection(4)
+			HiveConfirmed := 1
+			sendinput "{" RotRight " 4}" (hivedown ? ("{" RotUp "}") : "")
+			Send "{" ZoomOut " 5}"
 		}
 	}
 	;convert
@@ -10472,7 +10477,7 @@ nm_HealthBar() {
 nm_ConfirmAtHive(maxAttempts:=6){
 	ActivateRoblox()
 	GetRobloxClientPos()
-	x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//5
+	x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//4
 	Loop maxAttempts {
 		foundText := StrLower(RapidOcr.FromRect(x, y, 500, h, (A_Index - 1) // 2 + 1).Text)
 		if InStr(foundText, "make") {

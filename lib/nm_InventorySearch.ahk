@@ -1,7 +1,7 @@
 filterText(lines) {
     filteredLines := Array()
     for idx, line in lines {
-		line.Text := MultiStrReplace(line.Text, "-", '', ' ', '')
+		line.Text := StrLower(MultiStrReplace(line.Text, "-", '', ' ', ''))
 		filteredLines.Push(line)
     }
 	return filteredLines
@@ -107,6 +107,8 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 
 		Loop 4 { ; see if we can find an item in the first few lines
 			if items.Has(lines[1].Text) {
+				if StrLen(lines[1].Text) > StrLen(item) + 8 ; likely an item description, not a real item.
+					return
 				foundItem := items[lines[1].Text]
 				addLine(lines[1].Text, foundItem[2], foundItem[1])
 				firstItemIdx := foundItem[2]
@@ -162,27 +164,25 @@ nm_InventorySearch(item, direction:="down", maxIter:=70, intensity:=3, getRemain
 	}
 
 	getItems(curLines) {
-		diff := firstItemIdx - lastItemIdx
-		startIdx := lastItemIdx - 3 - diff
+		lastIdx := 0
 		for _, line in curLines {
 			if items.Has(line.Text) {
 				addLine(line, items[line.Text][2], items[line.Text][1])
 				continue
 			}
-			Loop itemArray.Length - lastItemIdx + 3 + diff {
-				idx := startIdx + A_Index
-				if itemArray.Length < idx {
-					break
-				}
-				item := itemArray[idx]
+			Loop itemArray.Length - lastIdx {
+				item := itemArray[A_Index]
 				if InStr(line.Text, StrLower(item)) {
-					addLine(line, item, idx)
+					lastIdx := A_Index
+					addLine(line, item, A_Index)
 					break
 				}
 			}
 		}
 	}
 	addLine(line, item, idx) {
+		if StrLen(line.Text) > StrLen(item) + 8 ; likely an item description, not a real item.
+			return
 		foundIdx += 1
 		line.items := itemLines
 		line.item := item

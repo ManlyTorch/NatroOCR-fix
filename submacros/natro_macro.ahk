@@ -11729,15 +11729,10 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 			KeyWait "F14", "T20 L"
 			nm_endWalk()
 			sleep 500
-			if nm_ConfirmAtHive() {
+			if nm_ConfirmAtHive()
 				HiveConfirmed := 1
-				sendinput "{" RotRight " 4}" (hivedown ? ("{" RotUp "}") : "")
-				Send "{" ZoomOut " 5}"
-			}
 		} else {
-			HiveConfirmed := 1
-			sendinput "{" RotRight " 4}" (hivedown ? ("{" RotUp "}") : "")
-			Send "{" ZoomOut " 5}"
+			nm_SetHiveCameraDirection(4)
 		}
 	}
 	;convert
@@ -11856,31 +11851,30 @@ nm_spawnMoveTo(moves) {
     }
     return script
 }
-nm_SetHiveCameraDirection(rotations, compensatePitch := 0){
-	global HiveConfirmed
-	static hivedown := 0
-	if hivedown
-		sendinput "{" RotDown "}"
-	region := windowX "|" windowY+3*windowHeight//4 "|" windowWidth "|" windowHeight//4
-	sconf := windowWidth**2//3200
-	loop (maxindex := 8/rotations*2) { ; 2 full rotations
-		sleep 250+KeyDelay
-		pBMScreen := Gdip_BitmapFromScreen(region), s := 0
-		for i, k in bitmaps["hive"] {
-			s := Max(s, Gdip_ImageSearch(pBMScreen, k, , , , , , 4, , , sconf))
-			if (s >= sconf) {
-				Gdip_DisposeImage(pBMScreen)
-				HiveConfirmed := 1
-				sendinput "{" RotRight " 4}" (hivedown ? ("{" RotUp "}") : "")
-				if compensatePitch
-					Send "{" RotUp " 2}"
-				Send "{" ZoomOut " 5}"
-				return 1
-			}
-		}
-		Gdip_DisposeImage(pBMScreen)
-		sendinput "{" RotRight " " rotations "}" ((maxindex/2 = A_Index) ? ("{" ((hivedown := !hivedown) ? RotDown : RotUp) "}") : "")
-	}
+nm_SetHiveCameraDirection(rotations){
+    global HiveConfirmed
+    static hivedown := 0
+    if hivedown
+        SendInput "{" RotDown "}"
+    loop 16 { ; allow 2 full rots before exit
+        GetRobloxClientPos()
+        Region := Gdip_BitmapFromScreen((windowX + (windowWidth - windowHeight//4)//2) "|" (windowY + windowHeight*5//8) "|" (windowHeight//4) "|" (windowHeight//4))
+        rez := Gdip_ImageSearch(Region, bitmaps["hive"]["back"])
+
+        Gdip_DisposeImage(Region)
+        if (rez > 0) {
+            HiveConfirmed := 1
+            SendInput "{" RotRight " 4}"
+            if (hivedown)
+                SendInput "{" RotUp "}"
+            Send "{" ZoomOut " 5}"
+            return 1
+        }
+
+        Send "{" RotLeft "}"
+        Sleep 20
+    }
+    return 0
 }
 nm_setShiftLock(state, *){
 	global bitmaps, SC_LShift, ShiftLockEnabled
@@ -20496,20 +20490,20 @@ nm_PathVars(){
 		static hivedown := 0
 		static pBMR := Gdip_BitmapFromBase64("iVBORw0KGgoAAAANSUhEUgAAACgAAAAGCAAAAACUM4P3AAAAAnRSTlMAAHaTzTgAAAAXdEVYdFNvZnR3YXJlAFBob3RvRGVtb24gOS4wzRzYMQAAAyZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0n77u/JyBpZD0nVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkJz8+Cjx4OnhtcG1ldGEgeG1sbnM6eD0nYWRvYmU6bnM6bWV0YS8nIHg6eG1wdGs9J0ltYWdlOjpFeGlmVG9vbCAxMi40NCc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpleGlmPSdodHRwOi8vbnMuYWRvYmUuY29tL2V4aWYvMS4wLyc+CiAgPGV4aWY6UGl4ZWxYRGltZW5zaW9uPjQwPC9leGlmOlBpeGVsWERpbWVuc2lvbj4KICA8ZXhpZjpQaXhlbFlEaW1lbnNpb24+NjwvZXhpZjpQaXhlbFlEaW1lbnNpb24+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnRpZmY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvJz4KICA8dGlmZjpJbWFnZUxlbmd0aD42PC90aWZmOkltYWdlTGVuZ3RoPgogIDx0aWZmOkltYWdlV2lkdGg+NDA8L3RpZmY6SW1hZ2VXaWR0aD4KICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogIDx0aWZmOlJlc29sdXRpb25Vbml0PjI8L3RpZmY6UmVzb2x1dGlvblVuaXQ+CiAgPHRpZmY6WFJlc29sdXRpb24+OTYvMTwvdGlmZjpYUmVzb2x1dGlvbj4KICA8dGlmZjpZUmVzb2x1dGlvbj45Ni8xPC90aWZmOllSZXNvbHV0aW9uPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz77yGiWAAAAI0lEQVR42mNUYyAOMDJggOUMDAyRmAqXMxAHmBiobjWxngEAj7gC+wwAe1AAAAAASUVORK5CYII=")
 
+		(bitmaps:=Map()).CaseSense := 0
+		#include "%A_ScriptDir%\nm_image_assets\reset\bitmaps.ahk"
+
 		success := 0
-		hwnd := GetRobloxHWND()
-		GetRobloxClientPos(hwnd)
+		GetRobloxClientPos()
 		SendEvent "{Click " windowX+350 " " windowY+offsetY+100 " 0}"
 
-		Loop 10
-		{
+		Loop 10 {
 			DetectHiddenWindows 1
 			if WinExist("background.ahk ahk_class AutoHotkey") {
 				PostMessage 0x5554, 1, DateDiff(A_NowUTC, "19700101000000", "Seconds")
 			}
 			DetectHiddenWindows 0
-			ActivateRoblox()
-			GetRobloxClientPos(hwnd)
+			GetRobloxClientPos()
 			SetKeyDelay 250+KeyDelay
 			SendEvent "{" SC_Esc "}{" SC_R "}{" SC_Enter "}"
 			SetKeyDelay 100+KeyDelay
@@ -20526,33 +20520,29 @@ nm_PathVars(){
 
 			if hivedown
 				Send "{" RotDown "}"
-			if nm_ConfirmAtHive() {
-				success := 1
-				Send "{" RotRight " 4}"
-				if hivedown
-					Send "{" RotUp "}"
-				SendEvent "{" ZoomOut " 5}"
-				break
-			}
+			loop 16 { ; allow 2 full rots before exit
+    		    GetRobloxClientPos()
+    		    pBMScreen := Gdip_BitmapFromScreen((windowX + (windowWidth - windowHeight//4)//2) "|" (windowY + windowHeight*5//8) "|" (windowHeight//4) "|" (windowHeight//4))
+    		    rez := Gdip_ImageSearch(pBMScreen, bitmaps["hive"]["back"])
+
+    		    Gdip_DisposeImage(pBMScreen)
+    		    if (rez > 0) {
+    		        success := 1
+    		        SendInput "{" RotRight " 4}"
+    		        if (hivedown)
+    		            SendInput "{" RotUp "}"
+    		        Send "{" ZoomOut " 5}"
+    		        break 2
+    		    }
+
+    		    Send "{" RotLeft "}"
+    		    Sleep 20
+    		}
 		}
+		for k,v in bitmaps["hive"]
+			Gdip_DisposeImage(v)
 		if (success = 0)
 			ExitApp
-	}
-	nm_ConfirmAtHive(maxAttempts:=6){
-		ActivateRoblox()
-		GetRobloxClientPos()
-		x := windowX+windowWidth//2-250, y := windowY+offsetY, h := windowHeight//4
-		Loop maxAttempts {
-			foundText := StrLower(RapidOcr.FromRect(x, y, 500, h, (A_Index - 1) // 2 + 1).Text)
-			if InStr(foundText, "make") {
-				return true
-			} else if InStr(foundText, "claim") { ; claim the hive slot
-				SendInput "{" SC_E " down}"
-				Sleep 100
-				SendInput "{" SC_E " up}"
-				return true
-			}
-		}
 	}
 	'
 	)
